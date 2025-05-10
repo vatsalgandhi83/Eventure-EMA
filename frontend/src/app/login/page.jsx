@@ -42,6 +42,8 @@ export default function LoginPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Comment out actual authentication for testing
+    /*
     try {
       const response = await fetch('http://localhost:9000/api/auth/signin', {
         method: 'POST',
@@ -68,13 +70,8 @@ export default function LoginPage() {
       if (response.ok) {
         showToast('Login successful! Redirecting...', 'success');
         localStorage.setItem('accessToken', data.accessToken);
-        localStorage.setItem('userRole', data.role);
         setTimeout(() => {
-          if (data.role === 'Manager') {
-            router.push('/manager/home');
-          } else {
-            router.push('/customer/home');
-          }
+          router.push('/customer/home');
         }, 1500);
       } else {
         // Show detailed error message from backend
@@ -91,6 +88,15 @@ export default function LoginPage() {
     } finally {
       setIsSubmitting(false);
     }
+    */
+
+    // Dummy authentication for testing
+    showToast('Login successful! Redirecting...', 'success');
+    localStorage.setItem('accessToken', 'dummy-token');
+    setTimeout(() => {
+      router.push('/customer/home');
+    }, 1500);
+    setIsSubmitting(false);
   };
 
   return (
