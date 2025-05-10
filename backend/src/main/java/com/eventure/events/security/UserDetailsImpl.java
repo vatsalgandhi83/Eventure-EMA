@@ -22,7 +22,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public String getPassword() {
-        return null; // Since we're using OAuth2, we don't need password
+        return user.getPassword();
     }
 
     @Override
