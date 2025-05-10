@@ -16,12 +16,11 @@ public class Users {
 
 	@Id
 	private String id;
-	private String userId;
+	//private String userId;
 	private String firstName;
 	private String lastName;
 	private String email;
+	private String password;
 	private String phoneNo;
 	private String usertype;
-
-
 }

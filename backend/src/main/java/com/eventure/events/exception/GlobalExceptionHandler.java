@@ -12,4 +12,5 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<String> handleInvalidCredentials(MyException ex) {
 		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
 	}
+
 }

@@ -7,5 +7,5 @@ import com.eventure.events.model.Users;
 
 public interface UserRepo extends MongoRepository<Users, String>{
 	Optional<Users> findByEmail(String email);
-
+	boolean existsByEmail(String email);
 }

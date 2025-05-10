@@ -1,61 +1,60 @@
 package com.eventure.events.controller;
 
+import com.eventure.events.config.JwtUtil;
+import com.eventure.events.dto.AuthRequest;
+import com.eventure.events.dto.AuthResponse;
+import com.eventure.events.exception.MyException;
 import com.eventure.events.model.Users;
 import com.eventure.events.repository.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
     private UserRepo userRepository;
 
-    @GetMapping("/login")
-    public String login() {
-        return "Please login with Google";
-    }
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-    @GetMapping("/success")
-    public ResponseEntity<?> success(@AuthenticationPrincipal OAuth2User oauth2User) {
-        if (oauth2User != null) {
-            // Check if user already exists
-            Users existingUser = userRepository.findByEmail(oauth2User.getAttribute("email"))
-                .orElse(new Users());
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+        Users user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new MyException("User not found"));
 
-            // Update or set user information
-            existingUser.setEmail(oauth2User.getAttribute("email"));
-            existingUser.setFirstName(oauth2User.getAttribute("given_name"));
-            existingUser.setLastName(oauth2User.getAttribute("family_name"));
-            existingUser.setUsertype("USER"); // Default user type
-            existingUser.setUserId(oauth2User.getAttribute("sub")); // Google's unique ID
-
-            // Save user to database
-            Users savedUser = userRepository.save(existingUser);
-            
-            return ResponseEntity.ok(savedUser);
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new MyException("Invalid password");
         }
-        return ResponseEntity.badRequest().body("Authentication failed");
+
+        String jwt = jwtUtil.generateToken(request.getEmail());
+        return ResponseEntity.ok(new AuthResponse(jwt, user));
     }
 
-    @GetMapping("/user")
-    public ResponseEntity<?> getUser(@AuthenticationPrincipal OAuth2User oauth2User) {
-        if (oauth2User != null) {
-            Users user = userRepository.findByEmail(oauth2User.getAttribute("email"))
-                .orElse(null);
-            if (user != null) {
-                return ResponseEntity.ok(user);
-            }
+    @PostMapping("/signup")
+    public ResponseEntity<?> register(@RequestBody Users user) {
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new MyException("User already exists with email: " + user.getEmail());
         }
-        return ResponseEntity.badRequest().body("Not authenticated");
-    }
 
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout() {
-        return ResponseEntity.ok("Logged out successfully");
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        userRepository.save(user);
+        return ResponseEntity.ok("User registered successfully");
     }
-} 
+}
