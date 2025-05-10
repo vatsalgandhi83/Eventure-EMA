@@ -23,12 +23,15 @@ public class JwtTokenProvider {
     }
 
     public String generateToken(Authentication authentication) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         String username = authentication.getName();
+        String userId = userDetails.getUser().getId();
         Date currentDate = new Date();
         Date expireDate = new Date(currentDate.getTime() + jwtExpirationInMs);
 
         return Jwts.builder()
                 .setSubject(username)
+                .claim("userId", userId)
                 .setIssuedAt(new Date())
                 .setExpiration(expireDate)
                 .signWith(key())

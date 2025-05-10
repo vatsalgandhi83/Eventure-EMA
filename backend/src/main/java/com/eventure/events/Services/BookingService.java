@@ -35,8 +35,13 @@ public class BookingService {
     }
 
     public BookingResponse bookEvent(BookingRequest request) {
+        // Try to find user by ID first
         Users user = userRepo.findById(request.getUserId())
-                .orElseThrow(() -> new MyException("User not found with id: " + request.getUserId()));
+                .orElseGet(() -> {
+                    // If not found by ID, try to find by email
+                    return userRepo.findByEmail(request.getUserId())
+                            .orElseThrow(() -> new MyException("User not found with id/email: " + request.getUserId()));
+                });
 
         Events event = eventRepo.findById(request.getEventId())
                 .orElseThrow(() -> new MyException("Event not found with id: " + request.getEventId()));
@@ -58,7 +63,7 @@ public class BookingService {
         }
 
         BookingDetails booking = new BookingDetails();
-        booking.setUserId(request.getUserId());
+        booking.setUserId(user.getId()); // Use the MongoDB ID from the user object
         booking.setTicketCount(request.getTicketCount());
         booking.setTotalTicketPrice(request.getTotalTicketPrice());
         booking.setTickets(ticketList);

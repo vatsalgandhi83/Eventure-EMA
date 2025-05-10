@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { Calendar, MapPin, User, Plus, Minus, X, CheckCircle, AlertCircle, Ticket } from 'lucide-react';
+import { jwtDecode } from 'jwt-decode';
 
 export default function EventDetailsPage() {
   const { id } = useParams();
@@ -34,7 +35,10 @@ export default function EventDetailsPage() {
   const fetchEventDetails = async () => {
     try {
       const accessToken = localStorage.getItem('accessToken');
+      console.log('Access Token:', accessToken); // Debug log
+      
       if (!accessToken) {
+        console.log('No access token found, redirecting to login'); // Debug log
         router.push('/login');
         return;
       }
@@ -52,6 +56,7 @@ export default function EventDetailsPage() {
       const data = await response.json();
       setEvent(data);
     } catch (err) {
+      console.error('Error in fetchEventDetails:', err); // Debug log
       setError(err.message);
     } finally {
       setLoading(false);
@@ -103,12 +108,39 @@ export default function EventDetailsPage() {
     }
   };
 
+  const handleInvalidToken = () => {
+    localStorage.removeItem('accessToken');
+    showToast('Your session has expired. Please login again.', 'error');
+    router.push('/login');
+  };
+
   const handleConfirmTicket = async () => {
     try {
-      const userId = localStorage.getItem('userId');
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        handleInvalidToken();
+        return;
+      }
+
+      // Decode the JWT token
+      const decodedToken = jwtDecode(accessToken);
+      console.log('Decoded token:', decodedToken);  // Debug log
+      
+      const userId = decodedToken.userId;  // Get userId from the claim
+      console.log('User ID from token:', userId);  // Debug log
+      
       if (!userId) {
-        showToast('Please login to book tickets', 'error');
-        router.push('/login');
+        console.error('Invalid token: missing userId');
+        console.log('Token contents:', decodedToken);  // Debug log
+        handleInvalidToken();
+        return;
+      }
+
+      // Check if token is expired
+      const currentTime = Date.now() / 1000;
+      if (decodedToken.exp < currentTime) {
+        console.error('Token expired');
+        handleInvalidToken();
         return;
       }
 
@@ -121,14 +153,16 @@ export default function EventDetailsPage() {
       setIsBooking(true);
       const totalTicketPrice = ticketCount * event.ticketPrice;
       
-      const response = await fetch('http://localhost:9000/api/bookings/createBooking', {
+      const response = await fetch('http://localhost:9000/api/bookEvent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
-          userId,
+          userId: userId,
           eventId: id,
           ticketCount,
           ticketPrice: event.ticketPrice,
@@ -137,7 +171,19 @@ export default function EventDetailsPage() {
         }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          const text = await response.text();
+          throw new Error(text || 'Failed to book tickets');
+        }
+      } catch (parseError) {
+        console.error('Error parsing response:', parseError);
+        throw new Error('Failed to process server response');
+      }
 
       if (response.ok) {
         showToast(`Booking confirmed! Your booking ID is ${data.bookingId}`, 'success');
@@ -146,12 +192,20 @@ export default function EventDetailsPage() {
         // Reset ticket count
         setTicketCount(1);
       } else {
-        const errorMessage = data.message || data.error || 'Failed to book tickets. Please try again.';
+        const errorMessage = data?.message || data?.error || 'Failed to book tickets. Please try again.';
         showToast(errorMessage, 'error');
+        if (response.status === 401) {
+          router.push('/login');
+        }
       }
     } catch (error) {
       console.error('Booking error:', error);
-      showToast('An error occurred while booking tickets. Please try again.', 'error');
+      if (error.message.includes('Unauthorized') || error.message.includes('User not found')) {
+        showToast('Please login again to continue', 'error');
+        router.push('/login');
+      } else {
+        showToast(error.message || 'An error occurred while booking tickets. Please try again.', 'error');
+      }
     } finally {
       setIsBooking(false);
     }
