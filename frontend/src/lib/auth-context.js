@@ -2,42 +2,53 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 
-const AuthContext = createContext();
+const AuthContext = createContext(undefined);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      setUser({ token });
+    // Check for stored token and user data on mount
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    
+    if (storedToken && storedUser) {
+      setToken(storedToken);
+      setUser(JSON.parse(storedUser));
+      setIsAuthenticated(true);
     }
-    setLoading(false);
   }, []);
 
-  const login = async (username, password) => {
+  const login = async (email, password) => {
     try {
       const response = await fetch('http://localhost:9000/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
-        throw new Error('Login failed');
+        const errorData = await response.text();
+        throw new Error(errorData);
       }
 
       const data = await response.json();
-      localStorage.setItem('accessToken', data.token);
-      setUser({ token: data.token });
+      setToken(data.token);
+      setUser(data.user);
+      setIsAuthenticated(true);
+
+      // Store in localStorage
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
       return true;
     } catch (error) {
       console.error('Login error:', error);
-      return false;
+      throw error;
     }
   };
 
@@ -52,57 +63,45 @@ export function AuthProvider({ children }) {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Signup failed');
+        const errorData = await response.text();
+        throw new Error(errorData);
       }
 
-      return true;
+      // Signup successful
+      return;
     } catch (error) {
       console.error('Signup error:', error);
       throw error;
     }
   };
 
-  const handleOAuth2Success = async () => {
-    try {
-      const response = await fetch('http://localhost:9000/api/auth/success', {
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('OAuth2 authentication failed');
-      }
-
-      const data = await response.json();
-      localStorage.setItem('accessToken', data.token);
-      setUser({ token: data.token });
-      return true;
-    } catch (error) {
-      console.error('OAuth2 error:', error);
-      return false;
-    }
-  };
-
   const logout = () => {
-    localStorage.removeItem('accessToken');
+    setToken(null);
     setUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   };
 
   const value = {
     user,
-    loading,
+    token,
     login,
-    logout,
     signup,
-    handleOAuth2Success,
+    logout,
+    isAuthenticated
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

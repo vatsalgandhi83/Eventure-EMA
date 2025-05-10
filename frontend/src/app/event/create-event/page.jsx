@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
 import { Calendar, MapPin, Tag, Ticket, DollarSign, Info, Image } from 'lucide-react';
 
 export default function CreateEventPage() {
   const router = useRouter();
+  const { user, token } = useAuth();
   const [formData, setFormData] = useState({
     eventName: '',
     desc: '',
@@ -104,43 +106,37 @@ export default function CreateEventPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
-      // Get organizer ID from localStorage or context
-      const organizerId = localStorage.getItem('userId');
-      
-      const response = await fetch('http://localhost:9000/api/events/createEvent', {
+      // Validate user is a manager
+      if (user.role !== 'Manager') {
+        showToast('Only managers can create events', 'error');
+        return;
+      }
+
+      const formData = new FormData();
+      // ... existing form data setup ...
+
+      const response = await fetch('http://localhost:9000/api/events/create', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          // Remove Content-Type header to let browser set it with boundary for FormData
         },
-        body: JSON.stringify({
-          ...formData,
-          organizerId,
-          eventAttendees: 0
-        }),
+        body: formData,
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        showToast('Event created successfully!', 'success');
-        setTimeout(() => {
-          router.push('/events'); // Redirect to events page
-        }, 2000);
-      } else {
-        const errorMessage = data.message || data.error || 'Failed to create event. Please try again.';
-        showToast(errorMessage, 'error');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create event');
       }
+
+      showToast('Event created successfully!', 'success');
+      router.push('/manager/dashboard');
     } catch (error) {
-      showToast('Network error. Please check your connection and try again.', 'error');
-      console.error('Create event error:', error);
+      console.error('Error creating event:', error);
+      showToast(error.message || 'Failed to create event. Please try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }

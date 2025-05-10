@@ -4,31 +4,20 @@ import { useState, useEffect } from 'react';
 import { Search, MapPin, Menu, X, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState('');
   const router = useRouter();
-
-  useEffect(() => {
-    // Check if user is logged in and get their role
-    const token = localStorage.getItem('accessToken');
-    const role = localStorage.getItem('userRole');
-    setIsLoggedIn(!!token);
-    setUserRole(role || '');
-  }, []);
+  const { user, isAuthenticated, logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('userRole');
-    setIsLoggedIn(false);
-    setUserRole('');
+    logout();
     router.push('/login');
   };
 
   const renderAuthButtons = () => {
-    if (isLoggedIn) {
+    if (isAuthenticated) {
       return (
         <button
           onClick={handleLogout}
@@ -59,9 +48,9 @@ export default function Navbar() {
   };
 
   const renderNavigationLinks = () => {
-    if (!isLoggedIn) return null;
+    if (!isAuthenticated) return null;
 
-    if (userRole === 'Manager') {
+    if (user.role === 'Manager') {
       return (
         <div className="flex items-center space-x-4">
           <Link href="/manager/events" className="text-gray-600 hover:text-gray-900">
@@ -88,9 +77,9 @@ export default function Navbar() {
   };
 
   const renderMobileNavigationLinks = () => {
-    if (!isLoggedIn) return null;
+    if (!isAuthenticated) return null;
 
-    if (userRole === 'Manager') {
+    if (user.role === 'Manager') {
       return (
         <>
           <Link
@@ -134,7 +123,7 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link 
-              href={isLoggedIn ? (userRole === 'Manager' ? '/manager/home' : '/customer/home') : '/'} 
+              href={isAuthenticated ? (user.role === 'Manager' ? '/manager/home' : '/customer/home') : '/'} 
               className="text-xl font-bold text-gray-800"
             >
               Eventure
@@ -208,7 +197,7 @@ export default function Navbar() {
 
             {renderMobileNavigationLinks()}
 
-            {isLoggedIn ? (
+            {isAuthenticated ? (
               <button
                 onClick={handleLogout}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-600 hover:text-gray-900 flex items-center justify-center gap-2"

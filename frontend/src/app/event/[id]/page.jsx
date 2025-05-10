@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { Calendar, MapPin, User, Plus, Minus, X, CheckCircle, AlertCircle, Ticket } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 export default function EventDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
+  const { token, user, isAuthenticated } = useAuth();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,15 +35,14 @@ export default function EventDetailsPage() {
 
   const fetchEventDetails = async () => {
     try {
-      const accessToken = localStorage.getItem('accessToken');
-      if (!accessToken) {
+      if (!isAuthenticated) {
         router.push('/login');
         return;
       }
       
       const response = await fetch(`http://localhost:9000/api/events/${id}`, {
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         credentials: 'include'
@@ -60,12 +61,11 @@ export default function EventDetailsPage() {
 
   const fetchUserBooking = async () => {
     try {
-      const userId = localStorage.getItem('userId');
-      if (!userId) return;
+      if (!user?.id) return;
 
-      const response = await fetch(`http://localhost:9000/api/bookings/user/${userId}`, {
+      const response = await fetch(`http://localhost:9000/api/bookings/user/${user.id}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -83,7 +83,7 @@ export default function EventDetailsPage() {
 
   useEffect(() => {
     fetchEventDetails();
-  }, [id]);
+  }, [id, isAuthenticated]);
 
   useEffect(() => {
     if (event) {
@@ -105,8 +105,7 @@ export default function EventDetailsPage() {
 
   const handleConfirmTicket = async () => {
     try {
-      const userId = localStorage.getItem('userId');
-      if (!userId) {
+      if (!isAuthenticated) {
         showToast('Please login to book tickets', 'error');
         router.push('/login');
         return;
@@ -125,10 +124,10 @@ export default function EventDetailsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          userId,
+          userId: user.id,
           eventId: id,
           ticketCount,
           ticketPrice: event.ticketPrice,
@@ -165,12 +164,12 @@ export default function EventDetailsPage() {
       const response = await fetch('http://localhost:9000/api/cancelBooking', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           bookingId: userBooking.bookingId,
-          userId: localStorage.getItem('userId')
+          userId: user.id
         }),
       });
 

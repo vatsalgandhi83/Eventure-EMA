@@ -1,62 +1,74 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
 import { Edit, Trash2, Calendar, MapPin, Ticket, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 
-// Dummy data - in a real app, this would come from an API
-const dummyEvents = [
-  {
-    id: '1',
-    title: 'Summer Music Festival',
-    date: '2024-07-15',
-    time: '14:00',
-    location: 'Central Park, New York',
-    totalTickets: 1000,
-    pricePerTicket: 50,
-    ticketsSold: 750,
-    status: 'active'
-  },
-  {
-    id: '2',
-    title: 'Tech Conference 2024',
-    date: '2024-08-20',
-    time: '09:00',
-    location: 'Convention Center, San Francisco',
-    totalTickets: 500,
-    pricePerTicket: 200,
-    ticketsSold: 300,
-    status: 'active'
-  },
-  {
-    id: '3',
-    title: 'Food & Wine Expo',
-    date: '2024-09-10',
-    time: '11:00',
-    location: 'Exhibition Hall, Chicago',
-    totalTickets: 800,
-    pricePerTicket: 75,
-    ticketsSold: 800,
-    status: 'sold-out'
-  }
-];
-
-export default function ManagerDashboard() {
-  const [events, setEvents] = useState(dummyEvents);
+export default function ManagerDashboardPage() {
+  const router = useRouter();
+  const { user, token, isAuthenticated } = useAuth();
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
-  const handleDelete = (eventId) => {
-    setSelectedEvent(eventId);
-    setShowDeleteModal(true);
+  useEffect(() => {
+    if (!isAuthenticated || user.role !== 'Manager') {
+      router.push('/login');
+      return;
+    }
+    fetchEvents();
+  }, [isAuthenticated, user]);
+
+  const fetchEvents = async () => {
+    try {
+      const response = await fetch(`http://localhost:9000/api/events/organizer/${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch events');
+      }
+
+      const data = await response.json();
+      setEvents(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const confirmDelete = () => {
-    // In a real app, this would make an API call
-    setEvents(events.filter(event => event.id !== selectedEvent));
-    setShowDeleteModal(false);
-    setSelectedEvent(null);
+  const handleDeleteEvent = async (eventId) => {
+    try {
+      const response = await fetch(`http://localhost:9000/api/events/${eventId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete event');
+      }
+
+      // Refresh events list
+      fetchEvents();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+    }
+  };
+
+  const handleEditEvent = (eventId) => {
+    router.push(`/event/edit/${eventId}`);
   };
 
   const getStatusColor = (status) => {
@@ -129,7 +141,10 @@ export default function ManagerDashboard() {
                         <Edit className="h-5 w-5" />
                       </Link>
                       <button
-                        onClick={() => handleDelete(event.id)}
+                        onClick={() => {
+                          setSelectedEvent(event.id);
+                          setShowDeleteModal(true);
+                        }}
                         className="inline-flex items-center p-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                       >
                         <Trash2 className="h-5 w-5" />
@@ -172,7 +187,7 @@ export default function ManagerDashboard() {
                   <button
                     type="button"
                     className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:col-start-2 sm:text-sm"
-                    onClick={confirmDelete}
+                    onClick={() => handleDeleteEvent(selectedEvent)}
                   >
                     Delete
                   </button>

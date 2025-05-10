@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Search, MapPin } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
 
 // Dummy data for testing
 const dummyEvents = [
@@ -41,52 +42,48 @@ const dummyEvents = [
   }
 ];
 
-export default function HomePage() {
+export default function CustomerHomePage() {
   const router = useRouter();
-  const [events, setEvents] = useState(dummyEvents);
+  const { user, token, isAuthenticated } = useAuth();
+  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [locationQuery, setLocationQuery] = useState('');
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const accessToken = localStorage.getItem('accessToken');
-        if (!accessToken) {
-          router.push('/login');
-          return;
-        }
-        const response = await fetch('http://localhost:9000/api/events/', {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        });
-        
-        console.log("Event Response", response);
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            localStorage.removeItem('accessToken');
-            router.push('/login');
-            return;
-          }
-          throw new Error('Failed to fetch events');
-        }
-
-        const data = await response.json();
-        setEvents(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
     fetchEvents();
-  }, [router]);
+  }, [isAuthenticated]);
+
+  const fetchEvents = async () => {
+    try {
+      const response = await fetch('http://localhost:9000/api/events', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch events');
+      }
+
+      const data = await response.json();
+      setEvents(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEventClick = (eventId) => {
+    router.push(`/event/${eventId}`);
+  };
 
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.eventName.toLowerCase().includes(searchQuery.toLowerCase()) ||

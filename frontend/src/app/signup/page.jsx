@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/components/Navbar';
 import { User, Mail, Lock, UserPlus, X, CheckCircle, AlertCircle, UserCog } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
@@ -13,10 +12,10 @@ export default function SignupPage() {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
-    username: '',
     email: '',
     password: '',
-    role: 'Customer'
+    phoneNo: '',
+    usertype: 'Customer'
   });
 
   const [errors, setErrors] = useState({});
@@ -48,10 +47,6 @@ export default function SignupPage() {
       newErrors.lastName = 'Last name is required';
     }
     
-    if (!formData.username.trim()) {
-      newErrors.username = 'Username is required';
-    }
-    
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -64,8 +59,12 @@ export default function SignupPage() {
       newErrors.password = 'Password must be at least 6 characters';
     }
 
-    if (!formData.role) {
-      newErrors.role = 'Please select a role';
+    if (!formData.phoneNo) {
+      newErrors.phoneNo = 'Phone number is required';
+    }
+
+    if (!formData.usertype) {
+      newErrors.usertype = 'Please select a role';
     }
 
     setErrors(newErrors);
@@ -206,30 +205,6 @@ export default function SignupPage() {
               </div>
 
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                  Username
-                </label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <UserPlus className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    name="username"
-                    id="username"
-                    value={formData.username}
-                    onChange={handleChange}
-                    className={`appearance-none block w-full pl-10 px-3 py-2 border ${
-                      errors.username ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                  />
-                </div>
-                {errors.username && (
-                  <p className="mt-1 text-sm text-red-600">{errors.username}</p>
-                )}
-              </div>
-
-              <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                   Email
                 </label>
@@ -250,6 +225,30 @@ export default function SignupPage() {
                 </div>
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="phoneNo" className="block text-sm font-medium text-gray-700">
+                  Phone Number
+                </label>
+                <div className="mt-1 relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <UserPlus className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="tel"
+                    name="phoneNo"
+                    id="phoneNo"
+                    value={formData.phoneNo}
+                    onChange={handleChange}
+                    className={`appearance-none block w-full pl-10 px-3 py-2 border ${
+                      errors.phoneNo ? 'border-red-300' : 'border-gray-300'
+                    } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                  />
+                </div>
+                {errors.phoneNo && (
+                  <p className="mt-1 text-sm text-red-600">{errors.phoneNo}</p>
                 )}
               </div>
 
@@ -278,7 +277,7 @@ export default function SignupPage() {
               </div>
 
               <div>
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="usertype" className="block text-sm font-medium text-gray-700">
                   Role
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
@@ -286,20 +285,20 @@ export default function SignupPage() {
                     <UserCog className="h-5 w-5 text-gray-400" />
                   </div>
                   <select
-                    name="role"
-                    id="role"
-                    value={formData.role}
+                    name="usertype"
+                    id="usertype"
+                    value={formData.usertype}
                     onChange={handleChange}
                     className={`appearance-none block w-full pl-10 px-3 py-2 border ${
-                      errors.role ? 'border-red-300' : 'border-gray-300'
+                      errors.usertype ? 'border-red-300' : 'border-gray-300'
                     } rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                   >
                     <option value="Customer">Customer</option>
                     <option value="Manager">Manager</option>
                   </select>
                 </div>
-                {errors.role && (
-                  <p className="mt-1 text-sm text-red-600">{errors.role}</p>
+                {errors.usertype && (
+                  <p className="mt-1 text-sm text-red-600">{errors.usertype}</p>
                 )}
               </div>
 

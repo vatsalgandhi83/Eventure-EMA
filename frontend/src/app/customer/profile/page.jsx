@@ -1,44 +1,80 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
 import { User, Mail, Phone, Lock } from 'lucide-react';
 
 export default function ProfilePage() {
-  // In a real application, this would come from an API call or context
-  const [user, setUser] = useState({
-    id: "67d13a54a55a48180074d70b",
-    userId: "U002",
-    firstName: "Jane",
-    lastName: "Smith",
-    email: "janesmith@example.com",
-    phoneNo: "1234567890",
-    password: "Password123",
-    usertype: "Customer"
-  });
+  const router = useRouter();
+  const { user, token, isAuthenticated } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [formData, setFormData] = useState({
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-    phoneNo: user.phoneNo,
-    password: user.password,
-    confirmPassword: user.password
-  });
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+    fetchProfile();
+  }, [isAuthenticated]);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await fetch(`http://localhost:9000/api/users/${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch profile');
+      }
+
+      const data = await response.json();
+      setProfile(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(`http://localhost:9000/api/users/${user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(profile)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile');
+      }
+
+      showToast('Profile updated successfully!', 'success');
+    } catch (error) {
+      showToast(error.message || 'Failed to update profile', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setProfile(prev => ({
       ...prev,
       [name]: value
     }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // In a real application, this would make an API call to update the user
-    console.log('Updating user:', formData);
-    alert('Profile updated successfully!');
   };
 
   return (
@@ -50,7 +86,7 @@ export default function ProfilePage() {
           <div className="px-4 py-5 sm:p-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-6">Profile Settings</h1>
             
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleUpdateProfile} className="space-y-6">
               <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
@@ -64,7 +100,7 @@ export default function ProfilePage() {
                       type="text"
                       name="firstName"
                       id="firstName"
-                      value={formData.firstName}
+                      value={profile?.firstName}
                       onChange={handleChange}
                       className="appearance-none block w-full pl-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     />
@@ -83,7 +119,7 @@ export default function ProfilePage() {
                       type="text"
                       name="lastName"
                       id="lastName"
-                      value={formData.lastName}
+                      value={profile?.lastName}
                       onChange={handleChange}
                       className="appearance-none block w-full pl-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     />
@@ -102,7 +138,7 @@ export default function ProfilePage() {
                       type="email"
                       name="email"
                       id="email"
-                      value={formData.email}
+                      value={profile?.email}
                       onChange={handleChange}
                       className="appearance-none block w-full pl-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     />
@@ -121,7 +157,7 @@ export default function ProfilePage() {
                       type="tel"
                       name="phoneNo"
                       id="phoneNo"
-                      value={formData.phoneNo}
+                      value={profile?.phoneNo}
                       onChange={handleChange}
                       className="appearance-none block w-full pl-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     />
@@ -140,7 +176,7 @@ export default function ProfilePage() {
                       type="password"
                       name="password"
                       id="password"
-                      value={formData.password}
+                      value={profile?.password}
                       onChange={handleChange}
                       className="appearance-none block w-full pl-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     />
@@ -159,7 +195,7 @@ export default function ProfilePage() {
                       type="password"
                       name="confirmPassword"
                       id="confirmPassword"
-                      value={formData.confirmPassword}
+                      value={profile?.confirmPassword}
                       onChange={handleChange}
                       className="appearance-none block w-full pl-10 px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     />
