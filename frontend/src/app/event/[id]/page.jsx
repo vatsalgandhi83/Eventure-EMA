@@ -18,6 +18,7 @@ export default function EventDetailsPage() {
   const [isCancelling, setIsCancelling] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
   const [userBooking, setUserBooking] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // Auto-hide toast after 5 seconds
   useEffect(() => {
@@ -120,7 +121,7 @@ export default function EventDetailsPage() {
       setIsBooking(true);
       const totalTicketPrice = ticketCount * event.ticketPrice;
       
-      const response = await fetch('http://localhost:9000/api/bookings/createBooking', {
+      const response = await fetch('http://localhost:9000/api/bookEvent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -144,6 +145,8 @@ export default function EventDetailsPage() {
         await fetchEventDetails();
         // Reset ticket count
         setTicketCount(1);
+        // Close the modal
+        setShowConfirmModal(false);
       } else {
         const errorMessage = data.message || data.error || 'Failed to book tickets. Please try again.';
         showToast(errorMessage, 'error');
@@ -250,6 +253,38 @@ export default function EventDetailsPage() {
             >
               <X className="h-4 w-4" />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Confirm Booking</h3>
+            <p className="text-gray-600 mb-6">
+              Confirm booking of {ticketCount} ticket(s) for a total of ${(ticketCount * event.ticketPrice).toFixed(2)}?
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+                disabled={isBooking}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmTicket}
+                disabled={isBooking}
+                className={`px-4 py-2 rounded-lg text-white font-medium ${
+                  isBooking
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700'
+                }`}
+              >
+                {isBooking ? 'Processing...' : 'Confirm'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -394,7 +429,7 @@ export default function EventDetailsPage() {
                         </div>
                       </div>
                       <button
-                        onClick={handleConfirmTicket}
+                        onClick={() => setShowConfirmModal(true)}
                         disabled={isBooking || event?.available_tickets === 0}
                         className={`w-full py-4 px-6 rounded-xl text-white font-semibold text-lg transition-all duration-200 ${
                           isBooking || event?.available_tickets === 0
