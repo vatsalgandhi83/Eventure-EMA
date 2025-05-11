@@ -66,7 +66,7 @@ export default function Navbar() {
     // Default to Customer view
     return (
       <div className="flex items-center space-x-4">
-        <Link href="/customer/tickets" className="text-gray-600 hover:text-gray-900">
+        <Link href="/customer/events" className="text-gray-600 hover:text-gray-900">
           My Bookings
         </Link>
         <Link href="/customer/profile" className="text-gray-600 hover:text-gray-900">

@@ -105,11 +105,11 @@ export default function EventDetailsPage() {
   };
 
   const createPayPalPayment = async (amount) => {
-    const response = await fetch('http://localhost:8080/api/events/create-payment', {
+    const response = await fetch('http://localhost:9000/api/events/create-payment', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ amount: amount.toFixed(2) }), // amount as string
     });
@@ -148,6 +148,7 @@ export default function EventDetailsPage() {
         ticketCount,
         ticketPrice: event.ticketPrice,
         totalTicketPrice,
+        paymentStatus: true,
       }));
 
       // Step 3: Redirect to PayPal
