@@ -4,13 +4,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Date;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
 	@ExceptionHandler(MyException.class)
-	public ResponseEntity<String> handleInvalidCredentials(MyException ex) {
-		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+	public ResponseEntity<?> handleMyException(MyException ex) {
+		Map<String, Object> error = new HashMap<>();
+		error.put("message", ex.getMessage());
+		error.put("timestamp", new Date());
+		error.put("status", 400);
+		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
 	}
 
 }
