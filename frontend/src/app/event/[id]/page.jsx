@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import { Calendar, MapPin, User, Plus, Minus, X, CheckCircle, AlertCircle, Ticket } from 'lucide-react';
+import { Calendar, MapPin, User, Plus, Minus, X, CheckCircle, AlertCircle, Ticket, ExternalLink, Clock, Info } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 
 export default function EventDetailsPage() {
@@ -191,6 +191,14 @@ export default function EventDetailsPage() {
     }
   };
 
+  const getGoogleMapsUrl = (latitude, longitude) => {
+    return `https://www.google.com/maps?q=${latitude},${longitude}`;
+  };
+
+  const getGoogleMapsEmbedUrl = (latitude, longitude) => {
+    return `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${latitude},${longitude}`;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -221,7 +229,7 @@ export default function EventDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
       <Navbar />
       
       {/* Toast Notification */}
@@ -246,208 +254,196 @@ export default function EventDetailsPage() {
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Event Image */}
-          <div className="lg:col-span-2">
+      <main>
+        {/* Full Width Image */}
+        <div className="w-full h-[500px] relative">
+          {event?.eventImageBase64 ? (
             <img
-              src={event.eventImage || '/placeholder-event.jpg'}
+              src={event.eventImageBase64}
               alt={event.eventName}
-              className="w-full h-96 object-cover rounded-lg"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = getPlaceholderImage(event.eventCategory);
+              }}
             />
-          </div>
-          
-          {/* Event Details */}
-          <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-gray-900">{event.eventName}</h1>
-            
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <Calendar className="h-5 w-5 text-gray-500 mr-2" />
-                <span className="text-gray-700">
-                  {formatDate(event.eventDateTime)}
-                </span>
-              </div>
-              
-              <div className="flex items-center">
-                <MapPin className="h-5 w-5 text-gray-500 mr-2" />
-                <span className="text-gray-700">
-                  {event.address}
-                </span>
-              </div>
-              
-              <div className="flex items-center">
-                <User className="h-5 w-5 text-gray-500 mr-2" />
-                <span className="text-gray-700">Event ID: {event.id}</span>
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-6xl mb-4">🎉</div>
+                <span className="text-gray-600 text-lg">{event?.eventName}</span>
               </div>
             </div>
-            
-            <div className="prose max-w-none">
-              <h2 className="text-xl font-semibold text-gray-900">About this event</h2>
-              <p className="text-gray-700">{event.desc}</p>
-            </div>
-            
-            {/* Additional Event Details */}
-            <div className="space-y-4">
-              {event.eventCategory && (
-                <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full inline-block">
-                  {event.eventCategory}
-                </div>
-              )}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-500">Event Capacity</p>
-                  <p className="text-lg font-semibold">{event.eventCapacity}</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-500">Available Tickets</p>
-                  <p className="text-lg font-semibold">{event.available_tickets}</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-500">Current Attendees</p>
-                  <p className="text-lg font-semibold">{event.eventAttendees}</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-500">Ticket Price</p>
-                  <p className="text-lg font-semibold">${event.ticketPrice}</p>
-                </div>
+          )}
+        </div>
+
+        {/* Content Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+            <div className="p-8">
+              {/* Event Title and Description */}
+              <div className="mb-8">
+                <h1 className="text-4xl font-bold text-gray-900 mb-4">{event?.eventName}</h1>
+                <p className="text-gray-600 text-lg leading-relaxed">{event?.desc}</p>
               </div>
-              
-              {event.eventInstruction && (
-                <div className="mt-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Event Instructions</h3>
-                  <p className="text-gray-700">{event.eventInstruction}</p>
-                </div>
-              )}
-              
-              {event.location?.gmapUrl && (
-                <div className="mt-4">
-                  <a 
-                    href={event.location.gmapUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 flex items-center"
-                  >
-                    <MapPin className="h-5 w-5 mr-2" />
-                    View on Google Maps
-                  </a>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Ticket Section */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Get Tickets</h2>
-            
-            {userBooking ? (
-              <div className="space-y-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="flex items-center mb-2">
-                    <Ticket className="h-5 w-5 text-blue-600 mr-2" />
-                    <h3 className="text-lg font-semibold text-blue-900">Your Booking</h3>
+
+              {/* Grid Layout for Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Left Column */}
+                <div className="space-y-6">
+                  <div className="flex items-center p-4 bg-white/50 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
+                    <Calendar className="h-6 w-6 text-indigo-600 mr-3" />
+                    <div>
+                      <p className="text-sm text-gray-500">Date & Time</p>
+                      <p className="text-gray-900 font-medium">{formatDate(event?.eventDateTime)}</p>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-blue-800">
-                      <span className="font-medium">Booking ID:</span> {userBooking.bookingId}
-                    </p>
-                    <p className="text-blue-800">
-                      <span className="font-medium">Tickets:</span> {userBooking.ticketCount}
-                    </p>
-                    <p className="text-blue-800">
-                      <span className="font-medium">Total Paid:</span> ${userBooking.totalTicketPrice}
-                    </p>
-                    <p className="text-blue-800">
-                      <span className="font-medium">Status:</span>{' '}
-                      <span className={`px-2 py-1 rounded-full text-sm ${
-                        userBooking.bookingStatus === 'CONFIRMED' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {userBooking.bookingStatus}
-                      </span>
-                    </p>
+                  
+                  <div className="flex items-center p-4 bg-white/50 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
+                    <MapPin className="h-6 w-6 text-indigo-600 mr-3" />
+                    <div>
+                      <p className="text-sm text-gray-500">Location</p>
+                      <p className="text-gray-900 font-medium">{event?.address}</p>
+                      <p className="text-gray-600">{event?.city}, {event?.state} {event?.zipCode}</p>
+                    </div>
                   </div>
+                  
+                  <div className="flex items-center p-4 bg-white/50 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm">
+                    <User className="h-6 w-6 text-indigo-600 mr-3" />
+                    <div>
+                      <p className="text-sm text-gray-500">Available Tickets</p>
+                      <p className="text-gray-900 font-medium">{event?.available_tickets} of {event?.eventCapacity} tickets remaining</p>
+                    </div>
+                  </div>
+
+                  {event?.eventCategory && event.eventCategory !== 'null' && (
+                    <div className="p-4 bg-indigo-50/80 backdrop-blur-sm rounded-xl border border-indigo-100">
+                      <div className="flex items-center mb-2">
+                        <Info className="h-5 w-5 text-indigo-600 mr-2" />
+                        <h3 className="font-semibold text-indigo-800">Event Category</h3>
+                      </div>
+                      <p className="text-indigo-600">{event.eventCategory}</p>
+                    </div>
+                  )}
+
+                  {event?.eventInstruction && event.eventInstruction !== 'null' && (
+                    <div className="p-4 bg-indigo-50/80 backdrop-blur-sm rounded-xl border border-indigo-100">
+                      <div className="flex items-center mb-2">
+                        <Info className="h-5 w-5 text-indigo-600 mr-2" />
+                        <h3 className="font-semibold text-indigo-800">Event Instructions</h3>
+                      </div>
+                      <p className="text-indigo-600">{event.eventInstruction}</p>
+                    </div>
+                  )}
                 </div>
 
-                {userBooking.bookingStatus === 'CONFIRMED' && (
-                  <button
-                    onClick={handleCancelBooking}
-                    disabled={isCancelling}
-                    className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isCancelling ? (
-                      <span className="flex items-center justify-center">
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Cancelling...
-                      </span>
-                    ) : (
-                      'Cancel Booking'
-                    )}
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-700">Number of tickets</span>
-                  <div className="flex items-center space-x-4">
-                    <button
-                      onClick={() => handleTicketCountChange(false)}
-                      className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={ticketCount <= 1 || isBooking}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <span className="text-lg font-semibold">{ticketCount}</span>
-                    <button
-                      onClick={() => handleTicketCountChange(true)}
-                      className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={ticketCount >= event.available_tickets || isBooking}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="border-t pt-4">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-700">Price per ticket</span>
-                    <span className="font-semibold">${event.ticketPrice}</span>
-                  </div>
-                  <div className="flex justify-between mb-4">
-                    <span className="text-gray-700">Total</span>
-                    <span className="font-semibold">${(event.ticketPrice * ticketCount).toFixed(2)}</span>
-                  </div>
-                </div>
-                
-                <button
-                  onClick={handleConfirmTicket}
-                  disabled={event.available_tickets === 0 || isBooking}
-                  className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isBooking ? (
-                    <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Processing...
-                    </span>
-                  ) : event.available_tickets === 0 ? (
-                    'Sold Out'
-                  ) : (
-                    'Reserve Spot'
+                {/* Right Column */}
+                <div className="space-y-6">
+                  {/* Google Maps Embed */}
+                  {event?.location?.latitude && event.location?.longitude && (
+                    <div className="space-y-3">
+                      <div 
+                        className="h-[300px] rounded-xl overflow-hidden shadow-lg border border-gray-100 relative cursor-pointer hover:shadow-xl transition-shadow duration-200"
+                        onClick={() => window.open(getGoogleMapsUrl(event.location.latitude, event.location.longitude), '_blank')}
+                      >
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          frameBorder="0"
+                          style={{ border: 0 }}
+                          src={getGoogleMapsEmbedUrl(event.location.latitude, event.location.longitude)}
+                          allowFullScreen
+                        />
+                      </div>
+                      <a 
+                        href={getGoogleMapsUrl(event.location.latitude, event.location.longitude)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Open in Google Maps
+                      </a>
+                    </div>
                   )}
-                </button>
+
+                  {/* Ticket Booking Section */}
+                  {!userBooking ? (
+                    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-gray-100">
+                      <div className="flex items-center justify-between mb-6">
+                        <div>
+                          <p className="text-sm text-gray-500">Price per ticket</p>
+                          <span className="text-3xl font-bold text-gray-900">${event?.ticketPrice.toFixed(2)}</span>
+                        </div>
+                        <div className="flex items-center space-x-4 bg-gray-50/80 backdrop-blur-sm p-2 rounded-lg border border-gray-100">
+                          <button
+                            onClick={() => handleTicketCountChange(false)}
+                            className="p-2 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+                            disabled={ticketCount <= 1}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                          <span className="text-lg font-semibold w-8 text-center">{ticketCount}</span>
+                          <button
+                            onClick={() => handleTicketCountChange(true)}
+                            className="p-2 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+                            disabled={ticketCount >= event?.available_tickets}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleConfirmTicket}
+                        disabled={isBooking || event?.available_tickets === 0}
+                        className={`w-full py-4 px-6 rounded-xl text-white font-semibold text-lg transition-all duration-200 ${
+                          isBooking || event?.available_tickets === 0
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700'
+                        }`}
+                      >
+                        {isBooking ? 'Processing...' : event?.available_tickets === 0 ? 'Sold Out' : 'Book Tickets'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bg-green-50/80 backdrop-blur-sm p-6 rounded-xl border border-green-100 shadow-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-semibold text-green-800 text-lg">Booking Confirmed</h3>
+                          <p className="text-green-600">You have booked {userBooking.ticketCount} ticket(s)</p>
+                        </div>
+                        <button
+                          onClick={handleCancelBooking}
+                          disabled={isCancelling}
+                          className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                            isCancelling
+                              ? 'bg-gray-400 cursor-not-allowed'
+                              : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
+                          }`}
+                        >
+                          {isCancelling ? 'Cancelling...' : 'Cancel Booking'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </main>
     </div>
   );
-} 
+}
+
+// Helper function to get placeholder image based on event category
+const getPlaceholderImage = (category) => {
+  const categoryLower = category?.toLowerCase() || '';
+  if (categoryLower.includes('tech') || categoryLower.includes('workshop')) {
+    return 'https://images.unsplash.com/photo-1504384764586-bb4cdc1707b0?w=500&auto=format&fit=crop&q=60';
+  } else if (categoryLower.includes('comedy')) {
+    return 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=500&auto=format&fit=crop&q=60';
+  } else {
+    return 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=500&auto=format&fit=crop&q=60';
+  }
+}; 

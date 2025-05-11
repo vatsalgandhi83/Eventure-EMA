@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/auth-context';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -27,6 +27,16 @@ export default function LoginPage() {
       return () => clearTimeout(timer);
     }
   }, [toast.show]);
+
+  useEffect(() => {
+    if (user) {
+      if (user.usertype === 'Manager') {
+        router.push('/manager/home');
+      } else {
+        router.push('/customer/home');
+      }
+    }
+  }, [user, router]);
 
   const showToast = (message, type = 'error') => {
     setToast({ show: true, message, type });
@@ -47,9 +57,6 @@ export default function LoginPage() {
     try {
       await login(formData.email, formData.password);
       showToast('Login successful! Redirecting...', 'success');
-      setTimeout(() => {
-        router.push('/customer/home');
-      }, 1500);
     } catch (error) {
       showToast(error.message || 'Invalid email or password', 'error');
       console.error('Login error:', error);
