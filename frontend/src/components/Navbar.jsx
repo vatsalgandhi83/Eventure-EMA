@@ -67,7 +67,7 @@ export default function Navbar() {
     return (
       <div className="flex items-center space-x-4">
         <Link href="/customer/tickets" className="text-gray-600 hover:text-gray-900">
-          My Tickets
+          My Bookings
         </Link>
         <Link href="/customer/profile" className="text-gray-600 hover:text-gray-900">
           Profile
