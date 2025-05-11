@@ -26,7 +26,7 @@ export default function ManagerEventsPage() {
 
   const fetchEvents = async () => {
     try {
-      const response = await fetch(`http://localhost:9000/api/events/byUser?userId=${user.id}`, {
+      const response = await fetch(`http://localhost:9000/api/events/byorganizer?organizerId=${user.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
