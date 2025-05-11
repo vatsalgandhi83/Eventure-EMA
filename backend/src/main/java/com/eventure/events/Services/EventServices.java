@@ -44,7 +44,7 @@ public class EventServices {
                 .orElseThrow(() -> new MyException("Organizer not found with ID: " + event.getOrganizerId()));
 
         // Check if user is a manager (case-insensitive)
-        if ("manager".equalsIgnoreCase(user.getUsertype())) {
+        if (!"manager".equalsIgnoreCase(user.getUsertype())) {
             throw new MyException("User is not allowed to add an event");
         }
 
