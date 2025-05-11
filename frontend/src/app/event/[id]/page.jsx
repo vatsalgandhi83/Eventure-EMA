@@ -104,6 +104,24 @@ export default function EventDetailsPage() {
     }
   };
 
+  const createPayPalPayment = async (amount) => {
+    const response = await fetch('http://localhost:8080/api/events/create-payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ amount: amount.toFixed(2) }), // amount as string
+    });
+
+    const data = await response.json();
+    if (data.status === 'success') {
+      return data.approvalUrl;
+    } else {
+      throw new Error(data.message || 'Failed to initiate payment');
+    }
+  };
+
   const handleConfirmTicket = async () => {
     try {
       if (!isAuthenticated) {
@@ -112,7 +130,6 @@ export default function EventDetailsPage() {
         return;
       }
 
-      // Validate ticket count
       if (ticketCount > event.available_tickets) {
         showToast(`Only ${event.available_tickets} tickets available`, 'error');
         return;
@@ -120,40 +137,25 @@ export default function EventDetailsPage() {
 
       setIsBooking(true);
       const totalTicketPrice = ticketCount * event.ticketPrice;
-      
-      const response = await fetch('http://localhost:9000/api/bookEvent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          eventId: id,
-          ticketCount,
-          ticketPrice: event.ticketPrice,
-          totalTicketPrice,
-          paymentStatus: true
-        }),
-      });
 
-      const data = await response.json();
+      // Step 1: Create PayPal payment
+      const approvalUrl = await createPayPalPayment(totalTicketPrice);
 
-      if (response.ok) {
-        showToast(`Booking confirmed! Your booking ID is ${data.bookingId}`, 'success');
-        // Refresh event data to update available tickets
-        await fetchEventDetails();
-        // Reset ticket count
-        setTicketCount(1);
-        // Close the modal
-        setShowConfirmModal(false);
-      } else {
-        const errorMessage = data.message || data.error || 'Failed to book tickets. Please try again.';
-        showToast(errorMessage, 'error');
-      }
+      // Step 2: Save booking intent info in localStorage
+      localStorage.setItem('bookingDetails', JSON.stringify({
+        userId: user.id,
+        eventId: id,
+        ticketCount,
+        ticketPrice: event.ticketPrice,
+        totalTicketPrice,
+      }));
+
+      // Step 3: Redirect to PayPal
+      window.location.href = approvalUrl;
+
     } catch (error) {
-      console.error('Booking error:', error);
-      showToast('An error occurred while booking tickets. Please try again.', 'error');
+      console.error('Payment initiation error:', error);
+      showToast(error.message, 'error');
     } finally {
       setIsBooking(false);
     }
