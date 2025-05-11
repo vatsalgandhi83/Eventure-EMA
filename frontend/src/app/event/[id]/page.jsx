@@ -148,6 +148,7 @@ export default function EventDetailsPage() {
         ticketCount,
         ticketPrice: event.ticketPrice,
         totalTicketPrice,
+        paymentStatus: true,
       }));
 
       // Step 3: Redirect to PayPal
