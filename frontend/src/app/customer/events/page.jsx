@@ -1,65 +1,49 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Calendar, MapPin, Ticket, DollarSign, X } from 'lucide-react';
-
-// Dummy data - in a real app, this would come from an API
-const dummyEvents = {
-  upcoming: [
-    {
-      id: '1',
-      title: 'Summer Music Festival',
-      date: '2024-07-15',
-      time: '14:00',
-      location: 'Central Park, New York',
-      ticketsBooked: 2,
-      pricePerTicket: 50,
-      totalPaid: 100,
-      bookingId: 'B001'
-    },
-    {
-      id: '2',
-      title: 'Tech Conference 2024',
-      date: '2024-08-20',
-      time: '09:00',
-      location: 'Convention Center, San Francisco',
-      ticketsBooked: 1,
-      pricePerTicket: 200,
-      totalPaid: 200,
-      bookingId: 'B002'
-    }
-  ],
-  past: [
-    {
-      id: '3',
-      title: 'Food & Wine Expo',
-      date: '2024-03-10',
-      time: '11:00',
-      location: 'Exhibition Hall, Chicago',
-      ticketsBooked: 3,
-      pricePerTicket: 75,
-      totalPaid: 225,
-      bookingId: 'B003'
-    },
-    {
-      id: '4',
-      title: 'Spring Art Show',
-      date: '2024-04-05',
-      time: '10:00',
-      location: 'Art Gallery, Boston',
-      ticketsBooked: 2,
-      pricePerTicket: 30,
-      totalPaid: 60,
-      bookingId: 'B004'
-    }
-  ]
-};
+import { useAuth } from '@/lib/auth-context';
+import { useRouter } from 'next/navigation';
 
 export default function CustomerEvents() {
-  const [events, setEvents] = useState(dummyEvents);
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const { user, token, isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+    fetchEvents();
+  }, [isAuthenticated, user]);
+
+  const fetchEvents = async () => {
+    try {
+      const response = await fetch(`http://localhost:9000/api/events/byUser?userId=${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch events');
+      }
+
+      const data = await response.json();
+      setEvents(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCancel = (bookingId) => {
     setSelectedBooking(bookingId);
@@ -68,10 +52,7 @@ export default function CustomerEvents() {
 
   const confirmCancel = () => {
     // In a real app, this would make an API call
-    setEvents({
-      ...events,
-      upcoming: events.upcoming.filter(event => event.bookingId !== selectedBooking)
-    });
+    setEvents(events.filter(event => event.bookingId !== selectedBooking));
     setShowCancelModal(false);
     setSelectedBooking(null);
   };
@@ -81,57 +62,72 @@ export default function CustomerEvents() {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  const EventCard = ({ event, isUpcoming }) => (
+  const EventCard = ({ event }) => (
     <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-4">
       <div className="px-4 py-5 sm:px-6">
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <div className="flex items-center">
-              <h2 className="text-lg font-medium text-gray-900">{event.title}</h2>
-              {isUpcoming && (
-                <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                  Upcoming
-                </span>
-              )}
+              <h2 className="text-lg font-medium text-gray-900">{event.eventName}</h2>
             </div>
             <div className="mt-2 sm:flex sm:justify-between">
               <div className="sm:flex">
                 <div className="flex items-center text-sm text-gray-500 mr-4">
                   <Calendar className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                  {formatDate(event.date)} at {event.time}
+                  {formatDate(event.eventDateTime)} at {event.eventDateTime.split('T')[1].substring(0, 5)}
                 </div>
                 <div className="flex items-center text-sm text-gray-500">
                   <MapPin className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                  {event.location}
+                  {event.address}, {event.city}, {event.state} {event.zipCode}
                 </div>
               </div>
               <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
                 <div className="flex items-center mr-4">
                   <Ticket className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                  {event.ticketsBooked} ticket{event.ticketsBooked > 1 ? 's' : ''}
+                  {event.ticketCount} ticket{event.ticketCount > 1 ? 's' : ''}
                 </div>
                 <div className="flex items-center">
                   <DollarSign className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                  ${event.totalPaid}
+                  ${event.totalAmount}
                 </div>
               </div>
             </div>
           </div>
-          {isUpcoming && (
-            <div className="ml-4 flex-shrink-0">
-              <button
-                onClick={() => handleCancel(event.bookingId)}
-                className="inline-flex items-center p-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-              >
-                <X className="h-5 w-5" />
-                <span className="ml-2">Cancel Booking</span>
-              </button>
-            </div>
-          )}
+          <div className="ml-4 flex-shrink-0">
+            <button
+              onClick={() => handleCancel(event.bookingId)}
+              className="inline-flex items-center p-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              <X className="h-5 w-5" />
+              <span className="ml-2">Cancel Booking</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center text-gray-600">Loading events...</div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center text-red-600">Error: {error}</div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -140,29 +136,13 @@ export default function CustomerEvents() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-8">My Events</h1>
 
-        {/* Upcoming Events Section */}
-        <div className="mb-12">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Upcoming Events</h2>
-          {events.upcoming.length > 0 ? (
-            events.upcoming.map(event => (
-              <EventCard key={event.bookingId} event={event} isUpcoming={true} />
-            ))
-          ) : (
-            <p className="text-gray-500">No upcoming events</p>
-          )}
-        </div>
-
-        {/* Past Events Section */}
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Past Events</h2>
-          {events.past.length > 0 ? (
-            events.past.map(event => (
-              <EventCard key={event.bookingId} event={event} isUpcoming={false} />
-            ))
-          ) : (
-            <p className="text-gray-500">No past events</p>
-          )}
-        </div>
+        {events.length > 0 ? (
+          events.map(event => (
+            <EventCard key={event.bookingId} event={event} />
+          ))
+        ) : (
+          <p className="text-gray-500">No events found</p>
+        )}
 
         {/* Cancel Confirmation Modal */}
         {showCancelModal && (
