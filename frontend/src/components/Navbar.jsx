@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, MapPin, Menu, X, LogOut } from 'lucide-react';
+import { Menu, X, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
@@ -39,7 +39,7 @@ export default function Navbar() {
         </Link>
         <Link
           href="/signup"
-          className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          className="px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg transition-all duration-200"
         >
           Signup
         </Link>
@@ -50,7 +50,7 @@ export default function Navbar() {
   const renderNavigationLinks = () => {
     if (!isAuthenticated) return null;
 
-    if (user.role === 'Manager') {
+    if (user.usertype === 'Manager') {
       return (
         <div className="flex items-center space-x-4">
           <Link href="/manager/events" className="text-gray-600 hover:text-gray-900">
@@ -79,7 +79,7 @@ export default function Navbar() {
   const renderMobileNavigationLinks = () => {
     if (!isAuthenticated) return null;
 
-    if (user.role === 'Manager') {
+    if (user.usertype === 'Manager') {
       return (
         <>
           <Link
@@ -123,7 +123,7 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link 
-              href={isAuthenticated ? (user.role === 'Manager' ? '/manager/home' : '/customer/home') : '/'} 
+              href={isAuthenticated ? (user.usertype === 'Manager' ? '/manager/home' : '/customer/home') : '/'} 
               className="text-xl font-bold text-gray-800"
             >
               Eventure
@@ -132,24 +132,6 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search events..."
-                className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-            </div>
-            
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Location"
-                className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <MapPin className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-            </div>
-
             {renderNavigationLinks()}
 
             <div className="flex items-center space-x-4">
@@ -177,24 +159,6 @@ export default function Navbar() {
       {isMenuOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <div className="relative mb-4">
-              <input
-                type="text"
-                placeholder="Search events..."
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-            </div>
-            
-            <div className="relative mb-4">
-              <input
-                type="text"
-                placeholder="Location"
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <MapPin className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-            </div>
-
             {renderMobileNavigationLinks()}
 
             {isAuthenticated ? (
@@ -215,7 +179,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   href="/signup"
-                  className="block px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                  className="block px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg transition-all duration-200"
                 >
                   Signup
                 </Link>
