@@ -2,6 +2,7 @@ package com.eventure.events.Services;
 
 import com.eventure.events.dto.Ticket;
 import com.eventure.events.model.BookingDetails;
+import com.eventure.events.model.Users;
 import com.eventure.events.repository.BookingRepo;
 import com.eventure.events.repository.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,9 +40,14 @@ public class EventServices {
     }
 
     public Events createEvent(Events event) {
-        if (!userRepo.existsById(event.getOrganizerId())) {
-            throw new MyException("Organizer not found with ID: " + event.getOrganizerId());
+        Users user = userRepo.findById(event.getOrganizerId())
+                .orElseThrow(() -> new MyException("Organizer not found with ID: " + event.getOrganizerId()));
+
+        // Check if user is a manager (case-insensitive)
+        if ("manager".equalsIgnoreCase(user.getUsertype())) {
+            throw new MyException("User is not allowed to add an event");
         }
+
         if (event.getEventImageBase64() != null) {
             String base64Image = event.getEventImageBase64();
             int imageSizeBytes = (int) ((base64Image.length() * 3) / 4);
@@ -89,6 +95,13 @@ public class EventServices {
         }
 
         return eventRepo.findByIdIn(eventIds); // _id matching
+    }
+
+    public List<Events> getOrganizerEventsList(String organizerId) {
+        if (organizerId == null || organizerId.isEmpty()) {
+            throw new MyException("Organizer ID must not be empty");
+        }
+        return eventRepo.findByOrganizerId(organizerId);
     }
 
     public Events updateEvent(String eventId, EventUpdateRequest updateRequest, String userId) {

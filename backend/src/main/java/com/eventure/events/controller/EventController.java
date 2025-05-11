@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.eventure.events.Services.EventServices;
@@ -18,6 +19,7 @@ public class EventController {
     @Autowired
     private EventServices eventService;
 
+    @PreAuthorize("hasRole('MANAGER')")
     @PostMapping("/createEvent")
     public ResponseEntity<Events> createEvent(@RequestBody Events event) {
         Events created = eventService.createEvent(event);
@@ -39,6 +41,12 @@ public class EventController {
     public ResponseEntity<List<Events>> getEventsByUserId(@RequestParam String userId) {
         List<Events> userEvents = eventService.getEventsByUserId(userId);
         return ResponseEntity.ok(userEvents);
+    }
+
+    @GetMapping("/byorganizer")
+    public ResponseEntity<List<Events>> getOrganizerEventsList(@RequestParam String organizerId) {
+        List<Events> organizerEventsList = eventService.getOrganizerEventsList(organizerId);
+        return ResponseEntity.ok(organizerEventsList);
     }
 
     @PutMapping("/{event_id}")

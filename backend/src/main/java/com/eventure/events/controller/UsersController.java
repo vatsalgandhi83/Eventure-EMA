@@ -6,10 +6,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.eventure.events.Services.UserService;
 import com.eventure.events.model.Users;
@@ -36,22 +33,24 @@ public class UsersController {
         return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-	/*@PostMapping
-	public ResponseEntity<Users> createUser(@RequestBody Users user) {
-		Users createUser = userService.addNewUser(user);
-		return new ResponseEntity<>(createUser, HttpStatus.CREATED);
-	}
-
 	@PutMapping("/{id}")
 	public ResponseEntity<Users> updateUser(@PathVariable String id, @RequestBody Users user) {
 		Users updatedUser = userService.updateUser(id, user);
 		return updatedUser != null ? ResponseEntity.ok(updatedUser) : ResponseEntity.notFound().build();
 	}
+/*
+	@PostMapping
+	public ResponseEntity<Users> createUser(@RequestBody Users user) {
+		Users createUser = userService.addNewUser(user);
+		return new ResponseEntity<>(createUser, HttpStatus.CREATED);
+	}*/
+
+	
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> deleteUser(@PathVariable String id) {
 		userService.deleteUser(id);
 		return ResponseEntity.noContent().build();
-	}*/
+	}
 
 }

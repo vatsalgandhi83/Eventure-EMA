@@ -2,6 +2,7 @@ package com.eventure.events.security;
 
 import com.eventure.events.Services.CustomUserDetailsService;
 import com.eventure.events.config.JwtUtil;
+import com.eventure.events.exception.MyException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,18 +36,14 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             jwt = authHeader.substring(7);
-            email = jwtUtil.extractEmail(jwt);
+           // email = jwtUtil.extractEmail(jwt);
+            try {
+                email = jwtUtil.extractEmail(jwt);
+            } catch (Exception e) {
+                throw new MyException("Invalid or expired token");
+            }
         }
 
-       /* if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-            if (jwtUtil.validateToken(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
-        }*/
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
             if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {

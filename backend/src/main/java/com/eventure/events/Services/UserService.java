@@ -1,6 +1,8 @@
 package com.eventure.events.Services;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -18,7 +20,10 @@ public class UserService {
     @Autowired
     private UserRepo userRepo;
 
-   // private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+   //private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     public List<Users> getAllUsers() {
         return userRepo.findAll();
@@ -43,8 +48,7 @@ public class UserService {
 
         return userRepo.save(user);
     }
-/*
-	// Move this api to AuthService or update the code for authentication
+
 	public Users updateUser(String id, Users user) {
 		if (userRepo.existsById(id)) {
 			user.setId(id);
@@ -54,9 +58,8 @@ public class UserService {
 		return null;
 	}
 
-	// Move this api to AuthService or update the code for authentication
 	public void deleteUser(String id) {
 		userRepo.deleteById(id);
-	}*/
+	}
 
 }
