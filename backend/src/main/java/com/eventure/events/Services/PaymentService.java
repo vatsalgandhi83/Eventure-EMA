@@ -74,8 +74,8 @@ public class PaymentService {
 
         // Set up redirect URLs
         ApplicationContext applicationContext = new ApplicationContext()
-                .returnUrl("http://localhost:8080/paypal/success")
-                .cancelUrl("http://localhost:8080/paypal/cancel")
+                .returnUrl("http://localhost:3000/payment-success")
+                .cancelUrl("http://localhost:3000/payment-cancel")
                 .brandName("Eventure")
                 .landingPage("BILLING")
                 .shippingPreference("NO_SHIPPING")
