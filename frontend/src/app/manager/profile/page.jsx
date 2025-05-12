@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
 import { User, Mail, Phone, BadgeCheck } from 'lucide-react';
-
+import { BASE_URL } from '@/constants/constants';
 export default function ManagerProfilePage() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();

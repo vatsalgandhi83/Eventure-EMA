@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 import { Search, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-
+import { BASE_URL } from '@/constants/constants';
 export default function CustomerHomePage() {
   const router = useRouter();
   const { user, token, isAuthenticated } = useAuth();
@@ -68,7 +68,7 @@ export default function CustomerHomePage() {
 
   const fetchEvents = async () => {
     try {
-      const response = await fetch('http://localhost:9000/api/events', {
+      const response = await fetch(`${BASE_URL}/events`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

@@ -7,7 +7,7 @@ import Navbar from '@/components/Navbar';
 import { Calendar, MapPin, DollarSign, Users, Image as ImageIcon, Clock, X, CheckCircle, AlertCircle } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-
+import { BASE_URL } from '@/constants/constants';
 // Add these styles at the top of your file or in your CSS
 const dateTimeStyles = {
   dateInput: {
@@ -139,7 +139,7 @@ export default function CreateEventPage() {
     }
 
     try {
-      const response = await fetch('http://localhost:9000/api/events/createEvent', {
+      const response = await fetch(`${BASE_URL}/events/createEvent`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

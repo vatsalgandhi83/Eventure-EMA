@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { Calendar, MapPin, Ticket, DollarSign, Edit, Trash2, Image as ImageIcon, Clock, X, Users, CheckCircle, AlertCircle } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-
+import { BASE_URL } from '@/constants/constants';
 export default function ManagerHomePage() {
   const { user, token, isAuthenticated } = useAuth();
   const router = useRouter();
@@ -90,7 +90,7 @@ export default function ManagerHomePage() {
 
   const fetchEvents = async () => {
     try {
-      const response = await fetch(`http://localhost:9000/api/events/byorganizer?organizerId=${user.id}`, {
+      const response = await fetch(`${BASE_URL}/events/byorganizer?organizerId=${user.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -112,7 +112,7 @@ export default function ManagerHomePage() {
 
   const handleDeleteEvent = async (eventId) => {
     try {
-      const response = await fetch(`http://localhost:9000/api/events/${eventId}`, {
+      const response = await fetch(`${BASE_URL}/events/${eventId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -187,7 +187,7 @@ export default function ManagerHomePage() {
     }
 
     try {
-      const response = await fetch('http://localhost:9000/api/events/createEvent', {
+      const response = await fetch(`${BASE_URL}/events/createEvent`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

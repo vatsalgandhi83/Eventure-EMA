@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useAuth } from '@/lib/auth-context';
-
+import { BASE_URL } from '@/constants/constants';
 export default function TicketsPage() {
   const searchParams = useSearchParams();
   const bookingId = searchParams.get('bookingId');

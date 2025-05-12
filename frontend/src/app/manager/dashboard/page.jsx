@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
 import { Edit, Trash2, Calendar, MapPin, Ticket, DollarSign } from 'lucide-react';
 import Link from 'next/link';
-
+import { BASE_URL } from '@/constants/constants';
 export default function ManagerDashboardPage() {
   const router = useRouter();
   const { user, token, isAuthenticated } = useAuth();
@@ -26,7 +26,7 @@ export default function ManagerDashboardPage() {
 
   const fetchEvents = async () => {
     try {
-      const response = await fetch(`http://localhost:9000/api/events/organizer/${user.id}`, {
+      const response = await fetch(`${BASE_URL}/events/organizer/${user.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -48,7 +48,7 @@ export default function ManagerDashboardPage() {
 
   const handleDeleteEvent = async (eventId) => {
     try {
-      const response = await fetch(`http://localhost:9000/api/events/${eventId}`, {
+      const response = await fetch(`${BASE_URL}/events/${eventId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

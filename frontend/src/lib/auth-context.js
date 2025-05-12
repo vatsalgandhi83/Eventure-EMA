@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
-
+import { BASE_URL } from '@/constants/constants';
 const AuthContext = createContext(undefined);
 
 export function AuthProvider({ children }) {
@@ -23,7 +23,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch('http://localhost:9000/api/auth/login', {
+      const response = await fetch(`${BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,7 +54,7 @@ export function AuthProvider({ children }) {
 
   const signup = async (userData) => {
     try {
-      const response = await fetch('http://localhost:9000/api/auth/signup', {
+      const response = await fetch(`${BASE_URL}/auth/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -83,12 +83,39 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('user');
   };
 
+  const updateUser = async (userId, userData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/user/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(userData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(errorData);
+      }
+
+      const updatedUser = await response.json();
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      return updatedUser;
+    } catch (error) {
+      console.error('Update user error:', error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     token,
     login,
     signup,
     logout,
+    updateUser,
     isAuthenticated
   };
 

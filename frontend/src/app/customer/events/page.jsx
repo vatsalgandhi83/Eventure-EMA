@@ -6,6 +6,7 @@ import { Calendar, MapPin, Ticket, DollarSign, X, Download } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import TicketModal from '@/components/TicketModal';
+import { BASE_URL } from '@/constants/constants';
 
 export default function CustomerEvents() {
   const [events, setEvents] = useState([]);
@@ -31,7 +32,7 @@ export default function CustomerEvents() {
 
   const fetchEvents = async () => {
     try {
-      const response = await fetch(`http://localhost:9000/api/events/byUser?userId=${user.id}`, {
+      const response = await fetch(`${BASE_URL}/events/byUser?userId=${user.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -59,7 +60,7 @@ export default function CustomerEvents() {
   const confirmCancel = async () => {
     setIsCancelling(true);
     try {
-      const response = await fetch('http://localhost:9000/api/cancelBooking', {
+      const response = await fetch(`${BASE_URL}/cancelBooking`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -112,7 +113,7 @@ export default function CustomerEvents() {
   const handleViewTickets = async (bookingId, userId) => {
     try {
       console.log('Fetching tickets for booking:', bookingId, 'userId:', userId);
-      const response = await fetch(`http://localhost:9000/api/getBookingDetails?bookingId=${bookingId}&userId=${userId}`, {
+      const response = await fetch(`${BASE_URL}/getBookingDetails?bookingId=${bookingId}&userId=${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -151,7 +152,7 @@ export default function CustomerEvents() {
 
   const handleDownloadTickets = async (bookingId, userId) => {
     try {
-      const response = await fetch(`http://localhost:9000/api/booking/${bookingId}/generatePdf?requestingUserId=${userId}`, {
+      const response = await fetch(`${BASE_URL}/booking/${bookingId}/generatePdf?requestingUserId=${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/pdf'

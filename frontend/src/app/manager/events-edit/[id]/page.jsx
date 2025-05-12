@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
 import { Calendar, MapPin, Ticket, DollarSign, Users } from 'lucide-react';
-
+import { BASE_URL } from '@/constants/constants';
 export default function EventEditPage() {
   const { id } = useParams();
   const router = useRouter();
@@ -38,7 +38,7 @@ export default function EventEditPage() {
 
   const fetchEventDetails = async () => {
     try {
-      const response = await fetch(`http://localhost:9000/api/events/${id}`, {
+      const response = await fetch(`${BASE_URL}/events/${id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -86,7 +86,7 @@ export default function EventEditPage() {
     setError(null);
 
     try {
-      const response = await fetch(`http://localhost:9000/api/events/${id}?userId=${user.id}`, {
+      const response = await fetch(`${BASE_URL}/events/${id}?userId=${user.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { Calendar, MapPin, User, Plus, Minus, X, CheckCircle, AlertCircle, Ticket, ExternalLink, Clock, Info } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
-
+import { BASE_URL } from '@/constants/constants';
 export default function EventDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
@@ -41,7 +41,7 @@ export default function EventDetailsPage() {
         return;
       }
       
-      const response = await fetch(`http://localhost:9000/api/events/${id}`, {
+      const response = await fetch(`${BASE_URL}/events/${id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -60,37 +60,11 @@ export default function EventDetailsPage() {
     }
   };
 
-  // const fetchUserBooking = async () => {
-  //   try {
-  //     if (!user?.id) return;
-
-  //     const response = await fetch(`http://localhost:9000/api/bookings/user/${user.id}`, {
-  //       headers: {
-  //         'Authorization': `Bearer ${token}`,
-  //         'Content-Type': 'application/json'
-  //       }
-  //     });
-
-  //     if (response.ok) {
-  //       const bookings = await response.json();
-  //       // Find booking for current event
-  //       const currentEventBooking = bookings.find(booking => booking.event.id === id);
-  //       setUserBooking(currentEventBooking);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching user booking:', error);
-  //   }
-  // };
-
   useEffect(() => {
     fetchEventDetails();
   }, [id, isAuthenticated]);
 
-  // useEffect(() => {
-  //   if (event) {
-  //     fetchUserBooking();
-  //   }
-  // }, [event]);
+
 
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -105,7 +79,7 @@ export default function EventDetailsPage() {
   };
 
   const createPayPalPayment = async (amount) => {
-    const response = await fetch('http://localhost:9000/api/events/create-payment', {
+    const response = await fetch(`${BASE_URL}/events/create-payment`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -140,7 +114,7 @@ export default function EventDetailsPage() {
 
       // If ticket price is zero, directly book the tickets
       if (totalTicketPrice === 0) {
-        const response = await fetch('http://localhost:9000/api/bookEvent', {
+        const response = await fetch(`${BASE_URL}/bookEvent`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -196,7 +170,7 @@ export default function EventDetailsPage() {
 
     try {
       setIsCancelling(true);
-      const response = await fetch('http://localhost:9000/api/cancelBooking', {
+      const response = await fetch(`${BASE_URL}/cancelBooking`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

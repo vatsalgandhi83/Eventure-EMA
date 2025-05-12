@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
 import { Calendar, MapPin, Tag, Ticket, DollarSign, Info, Image } from 'lucide-react';
-
+import { BASE_URL } from '@/constants/constants';
 export default function CreateEventPage() {
   const router = useRouter();
   const { user, token } = useAuth();
@@ -118,7 +118,7 @@ export default function CreateEventPage() {
       const formData = new FormData();
       // ... existing form data setup ...
 
-      const response = await fetch('http://localhost:9000/api/events/create', {
+      const response = await fetch(`${BASE_URL}/events/create`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

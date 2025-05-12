@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { CheckCircle, X } from 'lucide-react';
-
+import { BASE_URL } from '@/constants/constants';
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -40,7 +40,7 @@ export default function PaymentSuccessPage() {
           return;
         }
 
-        const response = await fetch('http://localhost:9000/api/bookEvent', {
+        const response = await fetch(`${BASE_URL}/bookEvent`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
