@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
-import { Calendar, MapPin, Ticket, DollarSign, X } from 'lucide-react';
+import { Calendar, MapPin, Ticket, DollarSign, X, Download } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import TicketModal from '@/components/TicketModal';
@@ -134,6 +134,43 @@ export default function CustomerEvents() {
     }
   };
 
+  const handleDownloadTickets = async (bookingId, userId) => {
+    try {
+      const response = await fetch(`http://localhost:9000/api/booking/${bookingId}/generatePdf?requestingUserId=${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/pdf'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download tickets');
+      }
+
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `tickets-${bookingId}.pdf`;
+      
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the URL
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading tickets:', err);
+      alert('Failed to download tickets. Please try again.');
+    }
+  };
+
   const EventCard = ({ event }) => {
     if (!event || !event.event || !event.booking) {
       return null;
@@ -152,20 +189,28 @@ export default function CustomerEvents() {
               <div className="mt-2">
                 <div className="text-sm text-gray-500 mb-2">Tickets:</div>
                 <div className="space-y-2">
-                  {event.booking.tickets.map((ticket, index) => (
-                    <div key={ticket.ticketId} className="text-sm text-gray-600">
-                      Ticket {index + 1}: {ticket.ticketId} - ${ticket.ticketPrice}
-                    </div>
-                  ))}
+                  <div className="text-sm text-gray-600">
+                    Total Tickets: {event.booking.tickets.length} - ${event.booking.tickets.reduce((sum, ticket) => sum + ticket.ticketPrice, 0).toFixed(2)}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center justify-between mt-4">
-                <button
-                  onClick={() => router.push(`/customer/tickets?bookingId=${event.booking.id}&userId=${event.booking.userId}`)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  View Tickets
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => router.push(`/customer/tickets?bookingId=${event.booking.id}&userId=${event.booking.userId}`)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
+                  >
+                    <Ticket className="h-4 w-4" />
+                    View Tickets
+                  </button>
+                  <button
+                    onClick={() => handleDownloadTickets(event.booking.id, event.booking.userId)}
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download PDF
+                  </button>
+                </div>
                 <button
                   onClick={() => handleCancel(event.booking.id)}
                   className="ml-4 px-4 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
