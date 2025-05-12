@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
-import { Calendar, MapPin, DollarSign, Users, Image as ImageIcon, Clock, X } from 'lucide-react';
+import { Calendar, MapPin, DollarSign, Users, Image as ImageIcon, Clock, X, CheckCircle, AlertCircle } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -74,6 +74,7 @@ export default function CreateEventPage() {
   const fileInputRef = useRef(null);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [previewUrl, setPreviewUrl] = useState('');
+  const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
   // Custom day styling for react-datepicker
   const dayClassName = date => {
@@ -118,6 +119,13 @@ export default function CreateEventPage() {
     }));
   };
 
+  const showToast = (message, type) => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: '' });
+    }, 5000); // Hide after 5 seconds
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -144,24 +152,29 @@ export default function CreateEventPage() {
         })
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        // Try to get error message from backend
-        let errorMsg = 'Failed to create event';
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.message || JSON.stringify(errorData) || errorMsg;
-        } catch {
-          // fallback to default error
-        }
-        throw new Error(errorMsg);
+        throw new Error(data.message || 'Failed to create event');
       }
 
-      setSuccess('Event created successfully!');
-      setTimeout(() => {
-        router.push('/manager/home');
-      }, 2000); // Redirect after 2 seconds
+      // Pass success state through router
+      router.push({
+        pathname: '/manager/home',
+        query: { 
+          status: 'success',
+          message: 'Event created successfully!' 
+        }
+      });
     } catch (err) {
-      setError(err.message);
+      // Pass error state through router
+      router.push({
+        pathname: '/manager/home',
+        query: { 
+          status: 'error',
+          message: err.message 
+        }
+      });
     } finally {
       setLoading(false);
     }
@@ -170,20 +183,22 @@ export default function CreateEventPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100">
       <Navbar />
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-2 ${
+          toast.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+        }`}>
+          {toast.type === 'success' ? (
+            <CheckCircle className="h-5 w-5" />
+          ) : (
+            <AlertCircle className="h-5 w-5" />
+          )}
+          <span className="font-medium">{toast.message}</span>
+        </div>
+      )}
       <main className="max-w-3xl mx-auto px-4 py-8">
         <div className="bg-white shadow-xl rounded-2xl p-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">Create New Event</h1>
-          {/* Success and Error Messages */}
-          {success && (
-            <div className="mb-4 p-3 rounded bg-green-100 text-green-800 text-center font-semibold">
-              {success}
-            </div>
-          )}
-          {error && (
-            <div className="mb-4 p-3 rounded bg-red-100 text-red-800 text-center font-semibold">
-              {error}
-            </div>
-          )}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="eventName" className="block text-sm font-medium text-gray-700">Event Name</label>

@@ -177,7 +177,7 @@ export default function ManagerEventsPage() {
                     
                     <div className="flex items-center text-gray-600">
                       <MapPin className="h-5 w-5 mr-2 text-blue-600" />
-                      <span>{event.location.city}, {event.location.state}</span>
+                      <span>{event.address || 'N/A'}</span>
                     </div>
                     
                     <div className="flex items-center text-gray-600">

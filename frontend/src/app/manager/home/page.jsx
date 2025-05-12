@@ -1,17 +1,18 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
-import { Calendar, MapPin, Ticket, DollarSign, Edit, Trash2, Image as ImageIcon, Clock, X, Users } from 'lucide-react';
+import { Calendar, MapPin, Ticket, DollarSign, Edit, Trash2, Image as ImageIcon, Clock, X, Users, CheckCircle, AlertCircle } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
 export default function ManagerHomePage() {
   const { user, token, isAuthenticated } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,6 +37,7 @@ export default function ManagerHomePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTimeDropdown, setShowTimeDropdown] = useState(false);
   const timeDropdownRef = useRef(null);
+  const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
   // Generate time slots
   const timeSlots = Array.from({ length: 24 * 4 }, (_, i) => {
@@ -69,6 +71,22 @@ export default function ManagerHomePage() {
       fetchEvents();
     }
   }, [isAuthenticated, user, router]);
+
+  useEffect(() => {
+    // Check for status and message in URL parameters
+    const status = searchParams.get('status');
+    const message = searchParams.get('message');
+
+    if (status && message) {
+      setToast({ show: true, message, type: status });
+      // Remove the query parameters from URL
+      router.replace('/manager/home');
+      // Hide toast after 5 seconds
+      setTimeout(() => {
+        setToast({ show: false, message: '', type: '' });
+      }, 5000);
+    }
+  }, [searchParams]);
 
   const fetchEvents = async () => {
     try {
@@ -223,6 +241,19 @@ export default function ManagerHomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <Navbar />
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className={`fixed bottom-4 right-4 z-50 p-4 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-up ${
+          toast.type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'
+        }`}>
+          {toast.type === 'success' ? (
+            <CheckCircle className="h-5 w-5 flex-shrink-0" />
+          ) : (
+            <AlertCircle className="h-5 w-5 flex-shrink-0" />
+          )}
+          <span className="font-medium">{toast.message}</span>
+        </div>
+      )}
       <main className="max-w-7xl mx-auto px-4 py-12">
         <div className="mb-8 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-100/50 to-purple-100/50 rounded-3xl blur-3xl -z-10"></div>
@@ -618,6 +649,21 @@ export default function ManagerHomePage() {
           </div>
         )} */}
       </main>
+      <style jsx global>{`
+        @keyframes slideUp {
+          from {
+            transform: translateY(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        .animate-slide-up {
+          animation: slideUp 0.3s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 }
