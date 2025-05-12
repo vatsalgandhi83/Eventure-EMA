@@ -21,6 +21,7 @@ import com.eventure.events.dto.EventByUserResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Service
 public class EventServices {
@@ -64,9 +65,10 @@ public class EventServices {
         updateEventGeocoding(event);
         return eventRepo.save(event);
     }
-
+    // Get list of all upcoming events
     public List<Events> getAllEvents() {
-        return eventRepo.findAll();
+        LocalDateTime now = LocalDateTime.now();
+        return eventRepo.findByEventDateTimeAfter(now);
     }
 
     public Optional<Events> getEventById(String id) {
@@ -159,4 +161,3 @@ public class EventServices {
     }
 
 }
-
