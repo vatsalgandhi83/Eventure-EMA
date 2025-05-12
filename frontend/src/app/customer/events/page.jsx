@@ -18,6 +18,8 @@ export default function CustomerEvents() {
   const [showQRModal, setShowQRModal] = useState(false);
   const { user, token, isAuthenticated } = useAuth();
   const router = useRouter();
+  const [toast, setToast] = useState(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -54,11 +56,37 @@ export default function CustomerEvents() {
     setShowCancelModal(true);
   };
 
-  const confirmCancel = () => {
-    // In a real app, this would make an API call
-    setEvents(events.filter(event => event.bookingId !== selectedBooking));
-    setShowCancelModal(false);
-    setSelectedBooking(null);
+  const confirmCancel = async () => {
+    setIsCancelling(true);
+    try {
+      const response = await fetch('http://localhost:9000/api/cancelBooking', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          bookingId: selectedBooking,
+          userId: user.id
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to cancel booking');
+      }
+
+      // Update the UI after successful cancellation
+      setEvents(events.filter(event => event.booking.id !== selectedBooking));
+      setShowCancelModal(false);
+      setSelectedBooking(null);
+      setToast('Booking cancelled successfully!');
+      setTimeout(() => setToast(null), 3000);
+    } catch (err) {
+      console.error('Error cancelling booking:', err);
+      alert('Failed to cancel booking. Please try again.');
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -112,7 +140,7 @@ export default function CustomerEvents() {
     }
 
     return (
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-4">
+      <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-4 relative">
         <div className="px-4 py-5 sm:px-6">
           <div className="flex items-center justify-between">
             <div className="flex-1">
@@ -131,12 +159,20 @@ export default function CustomerEvents() {
                   ))}
                 </div>
               </div>
-              <button
-                onClick={() => router.push(`/customer/tickets?bookingId=${event.booking.id}&userId=${event.booking.userId}`)}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                View Tickets
-              </button>
+              <div className="flex items-center justify-between mt-4">
+                <button
+                  onClick={() => router.push(`/customer/tickets?bookingId=${event.booking.id}&userId=${event.booking.userId}`)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  View Tickets
+                </button>
+                <button
+                  onClick={() => handleCancel(event.booking.id)}
+                  className="ml-4 px-4 py-2 bg-red-100 text-red-600 rounded hover:bg-red-200"
+                >
+                  Cancel Booking
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -185,44 +221,51 @@ export default function CustomerEvents() {
 
         {/* Cancel Confirmation Modal */}
         {showCancelModal && (
-          <div className="fixed z-10 inset-0 overflow-y-auto">
-            <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-              <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-                <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-              </div>
-
-              <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-              <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-                <div>
-                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                    <X className="h-6 w-6 text-red-600" />
-                  </div>
-                  <div className="mt-3 text-center sm:mt-5">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">
-                      Cancel Booking
-                    </h3>
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-500">
-                        Are you sure you want to cancel this booking? This action cannot be undone.
-                      </p>
-                    </div>
-                  </div>
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
+            onClick={() => setShowCancelModal(false)}
+          >
+            <div
+              className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative"
+              onClick={e => e.stopPropagation()} // Prevent closing when clicking inside modal
+            >
+              <button
+                className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                onClick={() => setShowCancelModal(false)}
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <div className="flex flex-col items-center">
+                <div className="flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                  <X className="h-6 w-6 text-red-600" />
                 </div>
-                <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Cancel Booking</h3>
+                <p className="text-sm text-gray-500 mb-4 text-center">
+                  Are you sure you want to cancel this booking? This action cannot be undone.
+                </p>
+                <div className="flex w-full gap-3">
                   <button
                     type="button"
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:col-start-2 sm:text-sm"
-                    onClick={confirmCancel}
-                  >
-                    Cancel Booking
-                  </button>
-                  <button
-                    type="button"
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+                    className="flex-1 inline-flex justify-center rounded-md border border-gray-300 px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     onClick={() => setShowCancelModal(false)}
                   >
                     Keep Booking
+                  </button>
+                  <button
+                    type="button"
+                    className="flex-1 inline-flex justify-center items-center gap-2 rounded-md border border-transparent px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-red-400 disabled:cursor-not-allowed"
+                    onClick={confirmCancel}
+                    disabled={isCancelling}
+                  >
+                    {isCancelling ? (
+                      <>
+                        <span className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></span>
+                        Cancelling...
+                      </>
+                    ) : (
+                      'Cancel Booking'
+                    )}
                   </button>
                 </div>
               </div>
@@ -236,6 +279,12 @@ export default function CustomerEvents() {
           onClose={() => setShowQRModal(false)}
           tickets={qrTickets}
         />
+
+        {toast && (
+          <div className="fixed top-6 right-6 z-50 bg-green-500 text-white px-4 py-2 rounded shadow-lg animate-fade-in">
+            {toast}
+          </div>
+        )}
       </main>
     </div>
   );
