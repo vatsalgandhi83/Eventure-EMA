@@ -20,7 +20,7 @@ export default function CustomerHomePage() {
 
   const carouselImages = [
     {
-      url: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069&auto=format&fit=crop",
+      url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=2074&auto=format&fit=crop",
       title: "Music Festivals",
       description: "Experience the rhythm of live music"
     },
@@ -30,12 +30,12 @@ export default function CustomerHomePage() {
       description: "Stay ahead with the latest innovations"
     },
     {
-      url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=2074&auto=format&fit=crop",
+      url: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2069&auto=format&fit=crop",
       title: "Food & Wine",
       description: "Savor the finest culinary experiences"
     },
     {
-      url: "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?q=80&w=2070&auto=format&fit=crop",
+      url: "https://images.unsplash.com/photo-1574602904324-a9ac0fe65331?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       title: "Sports Events",
       description: "Feel the thrill of live sports"
     }
