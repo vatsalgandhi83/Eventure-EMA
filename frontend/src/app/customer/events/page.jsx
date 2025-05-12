@@ -62,50 +62,37 @@ export default function CustomerEvents() {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  const EventCard = ({ event }) => (
-    <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-4">
-      <div className="px-4 py-5 sm:px-6">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center">
-              <h2 className="text-lg font-medium text-gray-900">{event.eventName}</h2>
-            </div>
-            <div className="mt-2 sm:flex sm:justify-between">
-              <div className="sm:flex">
-                <div className="flex items-center text-sm text-gray-500 mr-4">
-                  <Calendar className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                  {formatDate(event.eventDateTime)} at {event.eventDateTime.split('T')[1].substring(0, 5)}
-                </div>
-                <div className="flex items-center text-sm text-gray-500">
-                  <MapPin className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                  {event.address}, {event.city}, {event.state} {event.zipCode}
-                </div>
+  const EventCard = ({ event }) => {
+    if (!event || !event.event || !event.booking) {
+      return null;
+    }
+
+    return (
+      <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-4">
+        <div className="px-4 py-5 sm:px-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h2 className="text-lg font-medium text-gray-900 mb-2">{event.event.eventName}</h2>
+              <div className="flex items-center text-sm text-gray-500 mb-2">
+                <Calendar className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
+                {formatDate(event.event.eventDateTime)} at {event.event.eventDateTime.split('T')[1].substring(0, 5)}
               </div>
-              <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                <div className="flex items-center mr-4">
-                  <Ticket className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                  {event.ticketCount} ticket{event.ticketCount > 1 ? 's' : ''}
-                </div>
-                <div className="flex items-center">
-                  <DollarSign className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                  ${event.totalAmount}
+              <div className="mt-2">
+                <div className="text-sm text-gray-500 mb-2">Tickets:</div>
+                <div className="space-y-2">
+                  {event.booking.tickets.map((ticket, index) => (
+                    <div key={ticket.ticketId} className="text-sm text-gray-600">
+                      Ticket {index + 1}: {ticket.ticketId} - ${ticket.ticketPrice}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
-          </div>
-          <div className="ml-4 flex-shrink-0">
-            <button
-              onClick={() => handleCancel(event.bookingId)}
-              className="inline-flex items-center p-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            >
-              <X className="h-5 w-5" />
-              <span className="ml-2">Cancel Booking</span>
-            </button>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -134,12 +121,14 @@ export default function CustomerEvents() {
       <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">My Events</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-8">My Bookings</h1>
 
         {events.length > 0 ? (
-          events.map(event => (
-            <EventCard key={event.bookingId} event={event} />
-          ))
+          events
+            .filter(event => event.booking && event.booking.id)
+            .map(event => (
+              <EventCard key={event.booking.id} event={event} />
+            ))
         ) : (
           <p className="text-gray-500">No events found</p>
         )}
