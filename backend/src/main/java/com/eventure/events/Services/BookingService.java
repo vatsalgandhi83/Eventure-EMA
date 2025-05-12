@@ -104,6 +104,55 @@ public class BookingService {
         return new BookingResponse(savedBooking, user, event);
     }
 
+    public BookingResponse getBookingDetailsWithQrCodes(String bookingId, String requestingUserId) {
+        BookingDetails booking = bookingRepo.findById(bookingId)
+                .orElseThrow(() -> new MyException("Booking not found with ID: " + bookingId));
+
+        // Authorization: Check if the requesting user owns this booking
+        if (!booking.getUserId().equals(requestingUserId)) {
+            throw new MyException("User not authorized to view this booking.");
+            // Or handle with a specific HTTP status in the controller like 403 Forbidden
+        }
+
+        if (booking.getTickets() != null && !booking.getTickets().isEmpty()) {
+            for (Ticket ticket : booking.getTickets()) {
+                if (ticket.getQrCodeValue() != null && !ticket.getQrCodeValue().isEmpty()) {
+                    try {
+                        String qrBase64 = qrCodeService.generateQrCodeBase64(ticket.getQrCodeValue(), 200, 200);
+                        ticket.setQrCodeImageBase64(qrBase64);
+                    } catch (Exception e) {
+                        logger.error("Failed to generate QR code for ticketId {}: {}", ticket.getTicketId(), e.getMessage(), e);
+                        ticket.setQrCodeImageBase64(null); // Or an error indicator
+                    }
+                } else {
+                    ticket.setQrCodeImageBase64(null); // No value to encode
+                }
+            }
+        } else {
+             logger.warn("Booking with ID: {} has no tickets.", booking.getId());
+        }
+
+        // Fetch associated event and user details to return a comprehensive BookingResponse
+        Events event = null;
+        if (booking.getTickets() != null && !booking.getTickets().isEmpty() && booking.getTickets().get(0).getEventId() != null) {
+            event = eventRepo.findById(booking.getTickets().get(0).getEventId()).orElse(null);
+        }
+        if (event == null) {
+            logger.warn("Event details not found for booking ID: {}", bookingId);
+            // You might want to throw an exception or handle this gracefully depending on requirements
+        }
+
+        Users user = userRepo.findById(booking.getUserId()).orElse(null);
+        if (user == null) {
+            logger.warn("User details not found for booking ID: {}", bookingId);
+             // You might want to throw an exception or handle this gracefully
+        }
+        
+        // The BookingDetails object ('booking') now has its tickets populated with qrCodeImageBase64.
+        // Construct and return your BookingResponse DTO.
+        return new BookingResponse(booking, user, event);
+    }
+
     public String cancelBooking(String bookingId, String userId) {
         BookingDetails booking = bookingRepo.findById(bookingId)
                 .orElseThrow(() -> new MyException("Booking not found with id: " + bookingId));

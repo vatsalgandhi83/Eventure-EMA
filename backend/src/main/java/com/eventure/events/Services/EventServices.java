@@ -96,7 +96,7 @@ public class EventServices {
             }
         }
         
-        return eventByUserResponses; // _id matching
+        return eventByUserResponses;
     }
 
     public List<Events> getOrganizerEventsList(String organizerId) {
