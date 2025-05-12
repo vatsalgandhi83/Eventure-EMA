@@ -19,6 +19,7 @@ export default function CustomerEvents() {
   const { user, token, isAuthenticated } = useAuth();
   const router = useRouter();
   const [toast, setToast] = useState(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -56,6 +57,7 @@ export default function CustomerEvents() {
   };
 
   const confirmCancel = async () => {
+    setIsCancelling(true);
     try {
       const response = await fetch('http://localhost:9000/api/cancelBooking', {
         method: 'POST',
@@ -82,6 +84,8 @@ export default function CustomerEvents() {
     } catch (err) {
       console.error('Error cancelling booking:', err);
       alert('Failed to cancel booking. Please try again.');
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -250,10 +254,18 @@ export default function CustomerEvents() {
                   </button>
                   <button
                     type="button"
-                    className="flex-1 inline-flex justify-center rounded-md border border-transparent px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    className="flex-1 inline-flex justify-center items-center gap-2 rounded-md border border-transparent px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-red-400 disabled:cursor-not-allowed"
                     onClick={confirmCancel}
+                    disabled={isCancelling}
                   >
-                    Cancel Booking
+                    {isCancelling ? (
+                      <>
+                        <span className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></span>
+                        Cancelling...
+                      </>
+                    ) : (
+                      'Cancel Booking'
+                    )}
                   </button>
                 </div>
               </div>
