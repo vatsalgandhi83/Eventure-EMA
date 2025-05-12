@@ -7,8 +7,9 @@ import { CheckCircle, X } from 'lucide-react';
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { token } = useAuth();
+  const { token, isAuthenticated } = useAuth();
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
+  const [isProcessing, setIsProcessing] = useState(true);
 
   // Auto-hide toast after 5 seconds
   useEffect(() => {
@@ -20,12 +21,18 @@ export default function PaymentSuccessPage() {
     }
   }, [toast.show]);
 
-  // const showToast = (message, type = 'success') => {
-  //   setToast({ show: true, message, type });
-  // };
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+  };
 
   useEffect(() => {
     const finalizeBooking = async () => {
+      // Check if user is authenticated and token is available
+      if (!isAuthenticated || !token) {
+        console.log('Waiting for authentication...');
+        return;
+      }
+
       try {
         const details = JSON.parse(localStorage.getItem('bookingDetails') || '{}');
         if (!details.userId || !details.eventId) {
@@ -52,14 +59,10 @@ export default function PaymentSuccessPage() {
           return;
         }
 
-        if (response) {
-          // showToast('Tickets booked successfully!');
-
+        if (response.ok) {
+          showToast('Tickets booked successfully!', 'success');
           localStorage.removeItem('bookingDetails');
-
           router.push(`/event/${details.eventId}?status=success`);
-          alert('Tickets booked successfully!');
-
         } else {
           const error = await response.json();
           console.error('Booking finalization error:', error);
@@ -68,11 +71,13 @@ export default function PaymentSuccessPage() {
       } catch (error) {
         console.error('Error finalizing booking:', error);
         router.push('/?status=error');
+      } finally {
+        setIsProcessing(false);
       }
     };
 
     finalizeBooking();
-  }, [router, searchParams, token]);
+  }, [router, searchParams, token, isAuthenticated]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center">
@@ -110,9 +115,21 @@ export default function PaymentSuccessPage() {
 
       <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full mx-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Processing your booking...</h2>
-          <p className="text-gray-600">Please wait while we confirm your payment and complete your booking.</p>
+          {isProcessing ? (
+            <>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">Processing your booking...</h2>
+              <p className="text-gray-600">Please wait while we confirm your payment and complete your booking.</p>
+            </>
+          ) : (
+            <>
+              <div className="text-green-500 mb-4">
+                <CheckCircle className="h-16 w-16 mx-auto" />
+              </div>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">Booking Complete!</h2>
+              <p className="text-gray-600">You will be redirected shortly...</p>
+            </>
+          )}
         </div>
       </div>
     </div>
