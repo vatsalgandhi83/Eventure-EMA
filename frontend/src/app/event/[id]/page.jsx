@@ -138,10 +138,39 @@ export default function EventDetailsPage() {
       setIsBooking(true);
       const totalTicketPrice = ticketCount * event.ticketPrice;
 
-      // Step 1: Create PayPal payment
+      // If ticket price is zero, directly book the tickets
+      if (totalTicketPrice === 0) {
+        const response = await fetch('http://localhost:9000/api/bookEvent', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            eventId: id,
+            ticketCount,
+            ticketPrice: event.ticketPrice,
+            totalTicketPrice,
+            paymentStatus: true,
+          }),
+        });
+
+        if (response.ok) {
+          showToast(`Successfully booked ${ticketCount} ticket${ticketCount > 1 ? 's' : ''} for ${event.eventName}!`, 'success');
+          setShowConfirmModal(false);
+          router.push(`/event/${id}?status=success`);
+        } else {
+          const error = await response.json();
+          showToast(error.message || 'Failed to book tickets', 'error');
+        }
+        return;
+      }
+
+      // For paid tickets, proceed with PayPal payment
       const approvalUrl = await createPayPalPayment(totalTicketPrice);
 
-      // Step 2: Save booking intent info in localStorage
+      // Save booking intent info in localStorage
       localStorage.setItem('bookingDetails', JSON.stringify({
         userId: user.id,
         eventId: id,
@@ -151,7 +180,7 @@ export default function EventDetailsPage() {
         paymentStatus: true,
       }));
 
-      // Step 3: Redirect to PayPal
+      // Redirect to PayPal
       window.location.href = approvalUrl;
 
     } catch (error) {
@@ -453,13 +482,20 @@ export default function EventDetailsPage() {
                         <button
                           onClick={handleCancelBooking}
                           disabled={isCancelling}
-                          className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                          className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${
                             isCancelling
                               ? 'bg-gray-400 cursor-not-allowed'
                               : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
                           }`}
                         >
-                          {isCancelling ? 'Cancelling...' : 'Cancel Booking'}
+                          {isCancelling ? (
+                            <>
+                              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                              Cancelling...
+                            </>
+                          ) : (
+                            'Cancel Booking'
+                          )}
                         </button>
                       </div>
                     </div>
