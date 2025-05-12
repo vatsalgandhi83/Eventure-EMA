@@ -13,6 +13,8 @@ import com.eventure.events.repository.UserRepo;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +23,7 @@ import java.util.Map;
 
 @Service
 public class BookingService {
+    private static final Logger logger = LoggerFactory.getLogger(BookingService.class);
 
     private final BookingRepo bookingRepo;
     private final EventRepo eventRepo;
@@ -56,7 +59,7 @@ public class BookingService {
         List<Ticket> ticketList = new ArrayList<>();
         for (int i = 0; i < request.getTicketCount(); i++) {
             String ticketId = "T" + UUID.randomUUID().toString().substring(0, 8);
-            Ticket ticket = new Ticket(ticketId, request.getTicketPrice(), request.getEventId(), ticketId);
+            Ticket ticket = new Ticket(ticketId, request.getTicketPrice(), request.getEventId(), ticketId, null);
             ticketList.add(ticket);
         }
 
@@ -118,7 +121,7 @@ public class BookingService {
             for (Ticket ticket : booking.getTickets()) {
                 if (ticket.getQrCodeValue() != null && !ticket.getQrCodeValue().isEmpty()) {
                     try {
-                        String qrBase64 = qrCodeService.generateQrCodeBase64(ticket.getQrCodeValue(), 200, 200);
+                        String qrBase64 = qrcodeService.generateQrCodeBase64(ticket.getQrCodeValue(), 200, 200);
                         ticket.setQrCodeImageBase64(qrBase64);
                     } catch (Exception e) {
                         logger.error("Failed to generate QR code for ticketId {}: {}", ticket.getTicketId(), e.getMessage(), e);
