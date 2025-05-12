@@ -6,6 +6,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
+import org.springframework.core.io.ByteArrayResource;
 import org.slf4j.LoggerFactory;
 import com.eventure.events.dto.Ticket;
 
