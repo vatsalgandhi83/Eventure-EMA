@@ -45,4 +45,12 @@ public class BookingController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/booking/{bookingId}/generatePdf")
+    public ResponseEntity<ByteArrayResource> generatePdf(@PathVariable String bookingId) {
+        ByteArrayResource resource = bookingService.generatePdf(bookingId);
+        return ResponseEntity.ok()
+            .contentType(MediaType.APPLICATION_PDF)
+            .body(resource);
+    }
+
 }
