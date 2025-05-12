@@ -501,7 +501,7 @@ export default function ManagerHomePage() {
         </div>
 
         {/* Events List */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+        {/* <div className="bg-white shadow overflow-hidden sm:rounded-lg">
           <div className="px-4 py-5 sm:px-6">
             <h3 className="text-lg leading-6 font-medium text-gray-900">Your Events</h3>
             <p className="mt-1 max-w-2xl text-sm text-gray-500">List of all events you've created</p>
@@ -569,10 +569,10 @@ export default function ManagerHomePage() {
               )}
             </ul>
           )}
-        </div>
+        </div> */}
 
         {/* Delete Confirmation Modal */}
-        {showDeleteModal && (
+        {/* {showDeleteModal && (
           <div className="fixed z-10 inset-0 overflow-y-auto">
             <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
               <div className="fixed inset-0 transition-opacity" aria-hidden="true">
@@ -616,7 +616,7 @@ export default function ManagerHomePage() {
               </div>
             </div>
           </div>
-        )}
+        )} */}
       </main>
     </div>
   );
