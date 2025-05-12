@@ -121,7 +121,7 @@ public class BookingService {
             for (Ticket ticket : booking.getTickets()) {
                 if (ticket.getQrCodeValue() != null && !ticket.getQrCodeValue().isEmpty()) {
                     try {
-                        String qrBase64 = qrcodeService.generateQrCodeBase64(ticket.getQrCodeValue(), 200, 200);
+                        String qrBase64 = qrcodeService.generateQrCodeBase64(ticket.getTicketId(), 200, 200);
                         ticket.setQrCodeImageBase64(qrBase64);
                     } catch (Exception e) {
                         logger.error("Failed to generate QR code for ticketId {}: {}", ticket.getTicketId(), e.getMessage(), e);
