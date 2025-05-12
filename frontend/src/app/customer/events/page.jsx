@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import { Calendar, MapPin, Ticket, DollarSign, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
+import TicketModal from '@/components/TicketModal';
 
 export default function CustomerEvents() {
   const [events, setEvents] = useState([]);
@@ -12,6 +13,9 @@ export default function CustomerEvents() {
   const [error, setError] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [selectedQRBooking, setSelectedQRBooking] = useState(null);
+  const [qrTickets, setQRTickets] = useState([]);
+  const [showQRModal, setShowQRModal] = useState(false);
   const { user, token, isAuthenticated } = useAuth();
   const router = useRouter();
 
@@ -62,50 +66,83 @@ export default function CustomerEvents() {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  const EventCard = ({ event }) => (
-    <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-4">
-      <div className="px-4 py-5 sm:px-6">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center">
-              <h2 className="text-lg font-medium text-gray-900">{event.eventName}</h2>
-            </div>
-            <div className="mt-2 sm:flex sm:justify-between">
-              <div className="sm:flex">
-                <div className="flex items-center text-sm text-gray-500 mr-4">
-                  <Calendar className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                  {formatDate(event.eventDateTime)} at {event.eventDateTime.split('T')[1].substring(0, 5)}
-                </div>
-                <div className="flex items-center text-sm text-gray-500">
-                  <MapPin className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                  {event.address}, {event.city}, {event.state} {event.zipCode}
+  const handleViewTickets = async (bookingId, userId) => {
+    try {
+      console.log('Fetching tickets for booking:', bookingId, 'userId:', userId);
+      const response = await fetch(`http://localhost:9000/api/getBookingDetails?bookingId=${bookingId}&userId=${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('API Error:', errorData);
+        throw new Error(`Failed to fetch ticket details: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Received ticket data:', data);
+
+      if (!data.booking?.tickets || !Array.isArray(data.booking.tickets)) {
+        throw new Error('Invalid ticket data received from server');
+      }
+
+      // Check if tickets have QR codes
+      const ticketsWithQR = data.booking.tickets.map(ticket => {
+        if (!ticket.qrCodeImageBase64) {
+          console.warn('Ticket missing QR code:', ticket);
+        }
+        return ticket;
+      });
+
+      setSelectedQRBooking(bookingId);
+      setQRTickets(ticketsWithQR);
+      setShowQRModal(true);
+    } catch (err) {
+      console.error('Error in handleViewTickets:', err);
+      alert(err.message);
+    }
+  };
+
+  const EventCard = ({ event }) => {
+    if (!event || !event.event || !event.booking) {
+      return null;
+    }
+
+    return (
+      <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-4">
+        <div className="px-4 py-5 sm:px-6">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h2 className="text-lg font-medium text-gray-900 mb-2">{event.event.eventName}</h2>
+              <div className="flex items-center text-sm text-gray-500 mb-2">
+                <Calendar className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
+                {formatDate(event.event.eventDateTime)} at {event.event.eventDateTime.split('T')[1].substring(0, 5)}
+              </div>
+              <div className="mt-2">
+                <div className="text-sm text-gray-500 mb-2">Tickets:</div>
+                <div className="space-y-2">
+                  {event.booking.tickets.map((ticket, index) => (
+                    <div key={ticket.ticketId} className="text-sm text-gray-600">
+                      Ticket {index + 1}: {ticket.ticketId} - ${ticket.ticketPrice}
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                <div className="flex items-center mr-4">
-                  <Ticket className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                  {event.ticketCount} ticket{event.ticketCount > 1 ? 's' : ''}
-                </div>
-                <div className="flex items-center">
-                  <DollarSign className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                  ${event.totalAmount}
-                </div>
-              </div>
+              <button
+                onClick={() => router.push(`/customer/tickets?bookingId=${event.booking.id}&userId=${event.booking.userId}`)}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                View Tickets
+              </button>
             </div>
-          </div>
-          <div className="ml-4 flex-shrink-0">
-            <button
-              onClick={() => handleCancel(event.bookingId)}
-              className="inline-flex items-center p-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            >
-              <X className="h-5 w-5" />
-              <span className="ml-2">Cancel Booking</span>
-            </button>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -134,12 +171,14 @@ export default function CustomerEvents() {
       <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">My Events</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-8">My Bookings</h1>
 
         {events.length > 0 ? (
-          events.map(event => (
-            <EventCard key={event.bookingId} event={event} />
-          ))
+          events
+            .filter(event => event.booking && event.booking.id)
+            .map(event => (
+              <EventCard key={event.booking.id} event={event} />
+            ))
         ) : (
           <p className="text-gray-500">No events found</p>
         )}
@@ -190,6 +229,13 @@ export default function CustomerEvents() {
             </div>
           </div>
         )}
+
+        {/* QR Code Modal */}
+        <TicketModal
+          visible={showQRModal}
+          onClose={() => setShowQRModal(false)}
+          tickets={qrTickets}
+        />
       </main>
     </div>
   );

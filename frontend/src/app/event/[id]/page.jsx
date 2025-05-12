@@ -60,37 +60,37 @@ export default function EventDetailsPage() {
     }
   };
 
-  const fetchUserBooking = async () => {
-    try {
-      if (!user?.id) return;
+  // const fetchUserBooking = async () => {
+  //   try {
+  //     if (!user?.id) return;
 
-      const response = await fetch(`http://localhost:9000/api/bookings/user/${user.id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+  //     const response = await fetch(`http://localhost:9000/api/bookings/user/${user.id}`, {
+  //       headers: {
+  //         'Authorization': `Bearer ${token}`,
+  //         'Content-Type': 'application/json'
+  //       }
+  //     });
 
-      if (response.ok) {
-        const bookings = await response.json();
-        // Find booking for current event
-        const currentEventBooking = bookings.find(booking => booking.event.id === id);
-        setUserBooking(currentEventBooking);
-      }
-    } catch (error) {
-      console.error('Error fetching user booking:', error);
-    }
-  };
+  //     if (response.ok) {
+  //       const bookings = await response.json();
+  //       // Find booking for current event
+  //       const currentEventBooking = bookings.find(booking => booking.event.id === id);
+  //       setUserBooking(currentEventBooking);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching user booking:', error);
+  //   }
+  // };
 
   useEffect(() => {
     fetchEventDetails();
   }, [id, isAuthenticated]);
 
-  useEffect(() => {
-    if (event) {
-      fetchUserBooking();
-    }
-  }, [event]);
+  // useEffect(() => {
+  //   if (event) {
+  //     fetchUserBooking();
+  //   }
+  // }, [event]);
 
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };

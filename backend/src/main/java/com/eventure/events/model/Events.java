@@ -11,6 +11,7 @@ import java.util.List;
 
 @Document(collection = "EventDetails")
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class Events{
@@ -32,12 +33,4 @@ public class Events{
     private String eventCategory;
     private int eventAttendees;
     private String eventImageBase64;
-
-    public int getAvailable_tickets() {
-        return available_tickets;
-    }
-
-    public void setAvailable_tickets(int available_tickets) {
-        this.available_tickets = available_tickets;
-    }
 }

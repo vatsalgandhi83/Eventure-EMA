@@ -34,9 +34,15 @@ public class BookingController {
     }*/
 
     @PostMapping("/cancelBooking")
-public ResponseEntity<String> cancelBooking(@RequestBody CancelBookingRequest request) {
-    String message = bookingService.cancelBooking(request.getBookingId(), request.getUserId());
-    return ResponseEntity.ok(message);
-}
+    public ResponseEntity<String> cancelBooking(@RequestBody CancelBookingRequest request) {
+        String message = bookingService.cancelBooking(request.getBookingId(), request.getUserId());
+        return ResponseEntity.ok(message);
+    }
+
+    @GetMapping("/getBookingDetails")
+    public ResponseEntity<BookingResponse> getBookingDetails(@RequestParam String bookingId, @RequestParam String userId) {
+        BookingResponse response = bookingService.getBookingDetailsWithQrCodes(bookingId, userId);
+        return ResponseEntity.ok(response);
+    }
 
 }

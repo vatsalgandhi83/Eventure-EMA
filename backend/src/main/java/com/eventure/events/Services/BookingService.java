@@ -12,6 +12,9 @@ import com.eventure.events.repository.EventRepo;
 import com.eventure.events.repository.UserRepo;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -20,18 +23,21 @@ import java.util.Map;
 
 @Service
 public class BookingService {
+    private static final Logger logger = LoggerFactory.getLogger(BookingService.class);
 
     private final BookingRepo bookingRepo;
     private final EventRepo eventRepo;
     private final UserRepo userRepo;
     private final EmailService emailService;
+    private final QrCodeService qrcodeService;
 
     @Autowired
-    public BookingService(BookingRepo bookingRepo, EventRepo eventRepo, UserRepo userRepo, EmailService emailService) {
+    public BookingService(BookingRepo bookingRepo, EventRepo eventRepo, UserRepo userRepo, EmailService emailService, QrCodeService qrcodeService) {
         this.bookingRepo = bookingRepo;
         this.eventRepo = eventRepo;
         this.userRepo = userRepo;
         this.emailService = emailService;
+        this.qrcodeService = qrcodeService;
     }
 
     public BookingResponse bookEvent(BookingRequest request) {
@@ -53,7 +59,7 @@ public class BookingService {
         List<Ticket> ticketList = new ArrayList<>();
         for (int i = 0; i < request.getTicketCount(); i++) {
             String ticketId = "T" + UUID.randomUUID().toString().substring(0, 8);
-            Ticket ticket = new Ticket(ticketId, request.getTicketPrice(), request.getEventId());
+            Ticket ticket = new Ticket(ticketId, request.getTicketPrice(), request.getEventId(), ticketId, null);
             ticketList.add(ticket);
         }
 
@@ -89,7 +95,8 @@ public class BookingService {
                 user.getEmail(),
                 "Booking Confirmation - " + event.getEventName(),
                 "Emailtemplate/booking-confirmation.html",
-                emailVariables
+                emailVariables,
+                savedBooking.getTickets()
             );
             System.out.println("Email sent successfully to: " + user.getEmail());
         } catch (Exception e) {
@@ -98,6 +105,55 @@ public class BookingService {
         }
 
         return new BookingResponse(savedBooking, user, event);
+    }
+
+    public BookingResponse getBookingDetailsWithQrCodes(String bookingId, String requestingUserId) {
+        BookingDetails booking = bookingRepo.findById(bookingId)
+                .orElseThrow(() -> new MyException("Booking not found with ID: " + bookingId));
+
+        // Authorization: Check if the requesting user owns this booking
+        if (!booking.getUserId().equals(requestingUserId)) {
+            throw new MyException("User not authorized to view this booking.");
+            // Or handle with a specific HTTP status in the controller like 403 Forbidden
+        }
+
+        if (booking.getTickets() != null && !booking.getTickets().isEmpty()) {
+            for (Ticket ticket : booking.getTickets()) {
+                if (ticket.getQrCodeValue() != null && !ticket.getQrCodeValue().isEmpty()) {
+                    try {
+                        String qrBase64 = qrcodeService.generateQrCodeBase64(ticket.getTicketId(), 200, 200);
+                        ticket.setQrCodeImageBase64(qrBase64);
+                    } catch (Exception e) {
+                        logger.error("Failed to generate QR code for ticketId {}: {}", ticket.getTicketId(), e.getMessage(), e);
+                        ticket.setQrCodeImageBase64(null); // Or an error indicator
+                    }
+                } else {
+                    ticket.setQrCodeImageBase64(null); // No value to encode
+                }
+            }
+        } else {
+             logger.warn("Booking with ID: {} has no tickets.", booking.getId());
+        }
+
+        // Fetch associated event and user details to return a comprehensive BookingResponse
+        Events event = null;
+        if (booking.getTickets() != null && !booking.getTickets().isEmpty() && booking.getTickets().get(0).getEventId() != null) {
+            event = eventRepo.findById(booking.getTickets().get(0).getEventId()).orElse(null);
+        }
+        if (event == null) {
+            logger.warn("Event details not found for booking ID: {}", bookingId);
+            // You might want to throw an exception or handle this gracefully depending on requirements
+        }
+
+        Users user = userRepo.findById(booking.getUserId()).orElse(null);
+        if (user == null) {
+            logger.warn("User details not found for booking ID: {}", bookingId);
+             // You might want to throw an exception or handle this gracefully
+        }
+        
+        // The BookingDetails object ('booking') now has its tickets populated with qrCodeImageBase64.
+        // Construct and return your BookingResponse DTO.
+        return new BookingResponse(booking, user, event);
     }
 
     public String cancelBooking(String bookingId, String userId) {
@@ -141,7 +197,8 @@ public class BookingService {
                 user.getEmail(),
                 "Booking Cancelled - " + event.getEventName(),
                 "Emailtemplate/booking-cancellation.html",
-                emailVariables
+                emailVariables,
+                null
             );
             System.out.println("Cancellation email sent successfully to: " + user.getEmail());
         } catch (Exception e) {
