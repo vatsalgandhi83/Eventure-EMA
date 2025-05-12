@@ -16,6 +16,7 @@ import com.eventure.events.exception.MyException;
 import com.eventure.events.model.Events;
 import com.eventure.events.repository.EventRepo;
 import com.eventure.events.dto.EventUpdateRequest;
+import com.eventure.events.dto.EventByUserResponse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,26 +76,27 @@ public class EventServices {
         return eventRepo.findById(id);
     }
 
-    public List<Events> getEventsByUserId(String userId) {
+    public List<EventByUserResponse> getEventsByUserId(String userId) {
         List<BookingDetails> bookings = bookingRepo.findByUserIdAndBookingStatus(userId, "CONFIRMED");
 
-        List<String> eventIds = new ArrayList<>();
+        List<EventByUserResponse> eventByUserResponses = new ArrayList<>();
 
         for (BookingDetails booking : bookings) {
             List<Ticket> tickets = booking.getTickets();
-            for (Ticket ticket : tickets) {
-                String eventId = ticket.getEventId();
-                if (!eventIds.contains(eventId)) {
-                    eventIds.add(eventId);
-                }
+            if (!tickets.isEmpty()) {
+                String eventId = tickets.get(0).getEventId();
+                Optional<Events> event = eventRepo.findById(eventId);
+                EventByUserResponse eventByUserResponse = EventByUserResponse.builder()
+                    .booking(booking)
+                    .event(event.get())
+                    .build();
+                eventByUserResponses.add(eventByUserResponse);
+            } else {
+                throw new MyException("No tickets found for booking with ID: " + booking.getId());
             }
         }
-
-        if (eventIds.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        return eventRepo.findByIdIn(eventIds); // _id matching
+        
+        return eventByUserResponses; // _id matching
     }
 
     public List<Events> getOrganizerEventsList(String organizerId) {

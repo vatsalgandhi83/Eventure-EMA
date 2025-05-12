@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import com.eventure.events.Services.EventServices;
 import com.eventure.events.model.Events;
 import com.eventure.events.dto.EventUpdateRequest;
+import com.eventure.events.dto.EventByUserResponse;
 
 @RestController
 @RequestMapping(value = "/api/events")
@@ -38,8 +39,8 @@ public class EventController {
     }
 
     @GetMapping("/byUser")
-    public ResponseEntity<List<Events>> getEventsByUserId(@RequestParam String userId) {
-        List<Events> userEvents = eventService.getEventsByUserId(userId);
+    public ResponseEntity<List<EventByUserResponse>> getEventsByUserId(@RequestParam String userId) {        
+        List<EventByUserResponse> userEvents = eventService.getEventsByUserId(userId);
         return ResponseEntity.ok(userEvents);
     }
 

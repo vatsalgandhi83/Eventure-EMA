@@ -11,6 +11,7 @@ import java.util.List;
 
 @Document(collection = "EventDetails")
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class Events{
