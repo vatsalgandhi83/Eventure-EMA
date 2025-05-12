@@ -7,6 +7,8 @@
         body { font-family: Arial, sans-serif; }
         .container { padding: 20px; background: #f9f9f9; border-radius: 8px; }
         .header { color: #2d7be5; }
+        .ticket-block { margin-bottom: 20px; padding: 15px; border: 1px solid #cccccc; border-radius: 5px; background-color: #ffffff; }
+        .qr-code { max-width: 150px; height: auto; margin-top:10px; }
     </style>
 </head>
 <body>
@@ -19,6 +21,7 @@
         <p><strong>Venue:</strong> {{eventAddress}}</p>
         <p><strong>Instructions:</strong> {{eventInstruction}}</p>
         <p>You can view the event location on <a href="{{gmapUrl}}">Google Maps</a>.</p>
+        {{ticketDetails}} 
         <br>
         <p>Thank you for booking with us!</p>
         <p>Best regards,<br>Eventure Team</p>

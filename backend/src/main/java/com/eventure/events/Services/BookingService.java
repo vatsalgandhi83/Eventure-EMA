@@ -12,6 +12,7 @@ import com.eventure.events.repository.EventRepo;
 import com.eventure.events.repository.UserRepo;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -25,13 +26,15 @@ public class BookingService {
     private final EventRepo eventRepo;
     private final UserRepo userRepo;
     private final EmailService emailService;
+    private final QrCodeService qrcodeService;
 
     @Autowired
-    public BookingService(BookingRepo bookingRepo, EventRepo eventRepo, UserRepo userRepo, EmailService emailService) {
+    public BookingService(BookingRepo bookingRepo, EventRepo eventRepo, UserRepo userRepo, EmailService emailService, QrCodeService qrcodeService) {
         this.bookingRepo = bookingRepo;
         this.eventRepo = eventRepo;
         this.userRepo = userRepo;
         this.emailService = emailService;
+        this.qrcodeService = qrcodeService;
     }
 
     public BookingResponse bookEvent(BookingRequest request) {
@@ -53,7 +56,7 @@ public class BookingService {
         List<Ticket> ticketList = new ArrayList<>();
         for (int i = 0; i < request.getTicketCount(); i++) {
             String ticketId = "T" + UUID.randomUUID().toString().substring(0, 8);
-            Ticket ticket = new Ticket(ticketId, request.getTicketPrice(), request.getEventId());
+            Ticket ticket = new Ticket(ticketId, request.getTicketPrice(), request.getEventId(), ticketId);
             ticketList.add(ticket);
         }
 
@@ -89,7 +92,8 @@ public class BookingService {
                 user.getEmail(),
                 "Booking Confirmation - " + event.getEventName(),
                 "Emailtemplate/booking-confirmation.html",
-                emailVariables
+                emailVariables,
+                savedBooking.getTickets()
             );
             System.out.println("Email sent successfully to: " + user.getEmail());
         } catch (Exception e) {
@@ -141,7 +145,8 @@ public class BookingService {
                 user.getEmail(),
                 "Booking Cancelled - " + event.getEventName(),
                 "Emailtemplate/booking-cancellation.html",
-                emailVariables
+                emailVariables,
+                null
             );
             System.out.println("Cancellation email sent successfully to: " + user.getEmail());
         } catch (Exception e) {
