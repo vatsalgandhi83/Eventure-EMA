@@ -11,4 +11,6 @@ public class Ticket {
     private String ticketId;
     private double ticketPrice;
     private String eventId;
+    private String qrCodeValue;
+    private String qrCodeImageBase64;
 }

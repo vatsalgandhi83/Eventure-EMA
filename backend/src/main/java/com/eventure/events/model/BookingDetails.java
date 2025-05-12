@@ -9,6 +9,7 @@ import java.util.List;
 @Builder
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Document(collection = "BookingDetails")
 public class BookingDetails {
     @Id
@@ -18,15 +19,5 @@ public class BookingDetails {
     private double totalTicketPrice;
     private List<Ticket> tickets;
     private String bookingStatus;
-
-    public BookingDetails() {}
-
-    public BookingDetails(String userId, int ticketCount, double totalTicketPrice, List<Ticket> tickets, String bookingStatus) {
-        this.userId = userId;
-        this.ticketCount = ticketCount;
-        this.totalTicketPrice = totalTicketPrice;
-        this.tickets = tickets;
-        this.bookingStatus = bookingStatus;
-    }
 }
 
