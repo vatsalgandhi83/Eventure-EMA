@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import { Calendar, MapPin, Ticket, DollarSign, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
+import TicketModal from '@/components/TicketModal';
 
 export default function CustomerEvents() {
   const [events, setEvents] = useState([]);
@@ -12,6 +13,9 @@ export default function CustomerEvents() {
   const [error, setError] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [selectedQRBooking, setSelectedQRBooking] = useState(null);
+  const [qrTickets, setQRTickets] = useState([]);
+  const [showQRModal, setShowQRModal] = useState(false);
   const { user, token, isAuthenticated } = useAuth();
   const router = useRouter();
 
@@ -62,6 +66,46 @@ export default function CustomerEvents() {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
+  const handleViewTickets = async (bookingId, userId) => {
+    try {
+      console.log('Fetching tickets for booking:', bookingId, 'userId:', userId);
+      const response = await fetch(`http://localhost:9000/api/getBookingDetails?bookingId=${bookingId}&userId=${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('API Error:', errorData);
+        throw new Error(`Failed to fetch ticket details: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Received ticket data:', data);
+
+      if (!data.booking?.tickets || !Array.isArray(data.booking.tickets)) {
+        throw new Error('Invalid ticket data received from server');
+      }
+
+      // Check if tickets have QR codes
+      const ticketsWithQR = data.booking.tickets.map(ticket => {
+        if (!ticket.qrCodeImageBase64) {
+          console.warn('Ticket missing QR code:', ticket);
+        }
+        return ticket;
+      });
+
+      setSelectedQRBooking(bookingId);
+      setQRTickets(ticketsWithQR);
+      setShowQRModal(true);
+    } catch (err) {
+      console.error('Error in handleViewTickets:', err);
+      alert(err.message);
+    }
+  };
+
   const EventCard = ({ event }) => {
     if (!event || !event.event || !event.booking) {
       return null;
@@ -87,6 +131,12 @@ export default function CustomerEvents() {
                   ))}
                 </div>
               </div>
+              <button
+                onClick={() => router.push(`/customer/tickets?bookingId=${event.booking.id}&userId=${event.booking.userId}`)}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                View Tickets
+              </button>
             </div>
           </div>
         </div>
@@ -179,6 +229,13 @@ export default function CustomerEvents() {
             </div>
           </div>
         )}
+
+        {/* QR Code Modal */}
+        <TicketModal
+          visible={showQRModal}
+          onClose={() => setShowQRModal(false)}
+          tickets={qrTickets}
+        />
       </main>
     </div>
   );
