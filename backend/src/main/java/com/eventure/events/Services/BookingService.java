@@ -2,6 +2,7 @@ package com.eventure.events.Services;
 
 import com.eventure.events.dto.BookingRequest;
 import com.eventure.events.dto.BookingResponse;
+import com.eventure.events.dto.PdfTicketDataDto;
 import com.eventure.events.dto.Ticket;
 import com.eventure.events.exception.MyException;
 import com.eventure.events.model.BookingDetails;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.HashMap;
 import java.util.Map;
+import java.io.IOException;
 
 @Service
 public class BookingService {
@@ -30,14 +32,16 @@ public class BookingService {
     private final UserRepo userRepo;
     private final EmailService emailService;
     private final QrCodeService qrcodeService;
+    private final PdfTicketService pdfTicketService;
 
     @Autowired
-    public BookingService(BookingRepo bookingRepo, EventRepo eventRepo, UserRepo userRepo, EmailService emailService, QrCodeService qrcodeService) {
+    public BookingService(BookingRepo bookingRepo, EventRepo eventRepo, UserRepo userRepo, EmailService emailService, QrCodeService qrcodeService, PdfTicketService pdfTicketService) {
         this.bookingRepo = bookingRepo;
         this.eventRepo = eventRepo;
         this.userRepo = userRepo;
         this.emailService = emailService;
         this.qrcodeService = qrcodeService;
+        this.pdfTicketService = pdfTicketService;
     }
 
     public BookingResponse bookEvent(BookingRequest request) {
@@ -119,7 +123,7 @@ public class BookingService {
 
         if (booking.getTickets() != null && !booking.getTickets().isEmpty()) {
             for (Ticket ticket : booking.getTickets()) {
-                if (ticket.getQrCodeValue() != null && !ticket.getQrCodeValue().isEmpty()) {
+                if (ticket.getTicketId() != null && !ticket.getTicketId().isEmpty()) {
                     try {
                         String qrBase64 = qrcodeService.generateQrCodeBase64(ticket.getTicketId(), 200, 200);
                         ticket.setQrCodeImageBase64(qrBase64);
@@ -208,6 +212,35 @@ public class BookingService {
         }
 
         return "Booking cancelled successfully.";
+    }
+
+    public PdfTicketDataDto getPdfGenerationData(String bookingId, String requestingUserId) {
+        BookingDetails booking = bookingRepo.findById(bookingId)
+                .orElseThrow(() -> new MyException("Booking not found with ID: " + bookingId));
+
+        if (!booking.getUserId().equals(requestingUserId)) {
+            throw new MyException("User not authorized to view this booking.");
+        }
+
+        Events event = null;
+        if (booking.getTickets() != null && !booking.getTickets().isEmpty() && booking.getTickets().get(0).getEventId() != null) {
+            event = eventRepo.findById(booking.getTickets().get(0).getEventId())
+                    .orElseThrow(() -> new MyException("Event details not found for booking: " + bookingId));
+        } else {
+             throw new MyException("Cannot determine event for booking: " + bookingId);
+        }
+
+        Users user = userRepo.findById(booking.getUserId())
+                .orElseThrow(() -> new MyException("User details not found for booking: " + bookingId));
+
+        return new PdfTicketDataDto(booking, event, user);
+    }
+
+    public ByteArrayResource generatePdf(String bookingId, String requestingUserId) throws IOException {
+        PdfTicketDataDto data = getPdfGenerationData(bookingId, requestingUserId);
+        // PdfTicketService now needs to accept PdfTicketDataDto or you extract from it here
+        byte[] pdfBytes = pdfTicketService.generateTicketPdf(data.getBooking(), data.getEvent(), data.getUser());
+        return new ByteArrayResource(pdfBytes);
     }
 
 }
