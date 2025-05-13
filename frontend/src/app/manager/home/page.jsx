@@ -211,6 +211,13 @@ export default function ManagerHomePage() {
         throw new Error(errorMsg);
       }
 
+      // Show success message
+      setToast({ show: true, message: 'Event created successfully!', type: 'success' });
+      // Hide toast after 5 seconds
+      setTimeout(() => {
+        setToast({ show: false, message: '', type: '' });
+      }, 5000);
+
       // Reset form
       setFormData({
         eventName: '',

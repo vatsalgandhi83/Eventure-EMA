@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Navbar from '@/components/Navbar';
-import { Calendar, MapPin, Ticket, DollarSign, Edit, Trash2, Users } from 'lucide-react';
+import { Calendar, MapPin, DollarSign, Edit, Users } from 'lucide-react';
 import Link from 'next/link';
 import { BASE_URL } from '@/constants/constants';
 export default function ManagerEventsPage() {
@@ -13,8 +13,6 @@ export default function ManagerEventsPage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
 
   useEffect(() => {
     if (!isAuthenticated || user?.usertype !== 'Manager') {
@@ -43,28 +41,6 @@ export default function ManagerEventsPage() {
       setError(err.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDeleteEvent = async (eventId) => {
-    try {
-      const response = await fetch(`${BASE_URL}/events/${eventId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete event');
-      }
-
-      setShowDeleteModal(false);
-      fetchEvents();
-    } catch (error) {
-      console.error('Error deleting event:', error);
-      setError('Failed to delete event. Please try again.');
     }
   };
 
@@ -138,23 +114,13 @@ export default function ManagerEventsPage() {
                     alt={event.eventName}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute top-4 right-4 flex space-x-2">
+                  <div className="absolute top-4 right-4">
                     <button
                       onClick={() => handleEditEvent(event.id)}
                       className="p-2 bg-white/90 rounded-full hover:bg-white transition-colors"
                       title="Edit Event"
                     >
                       <Edit className="h-5 w-5 text-blue-600" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedEvent(event);
-                        setShowDeleteModal(true);
-                      }}
-                      className="p-2 bg-white/90 rounded-full hover:bg-white transition-colors"
-                      title="Delete Event"
-                    >
-                      <Trash2 className="h-5 w-5 text-red-600" />
                     </button>
                   </div>
                 </div>
@@ -193,32 +159,6 @@ export default function ManagerEventsPage() {
                 </div>
               </div>
             ))}
-          </div>
-        )}
-
-        {/* Delete Confirmation Modal */}
-        {showDeleteModal && selectedEvent && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Delete Event</h3>
-              <p className="text-gray-600 mb-6">
-                Are you sure you want to delete "{selectedEvent.eventName}"? This action cannot be undone.
-              </p>
-              <div className="flex justify-end space-x-4">
-                <button
-                  onClick={() => setShowDeleteModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleDeleteEvent(selectedEvent.id)}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
           </div>
         )}
       </main>
