@@ -21,7 +21,7 @@ export default function TicketsPage() {
       router.push('/customer/events');
       return;
     }
-    fetch(`http://localhost:9000/api/getBookingDetails?bookingId=${bookingId}&userId=${userId}`, {
+    fetch(`${BASE_URL}/getBookingDetails?bookingId=${bookingId}&userId=${userId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'

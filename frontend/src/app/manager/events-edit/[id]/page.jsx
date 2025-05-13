@@ -24,8 +24,7 @@ export default function EventEditPage() {
     zipCode: '',
     address: '',
     eventInstruction: '',
-    eventCategory: '',
-    eventImageBase64: ''
+    eventCategory: ''
   });
 
   useEffect(() => {
@@ -62,8 +61,7 @@ export default function EventEditPage() {
         zipCode: data.zipCode || '',
         address: data.address || '',
         eventInstruction: data.eventInstruction || '',
-        eventCategory: data.eventCategory || '',
-        eventImageBase64: data.eventImageBase64 || ''
+        eventCategory: data.eventCategory || ''
       });
     } catch (err) {
       setError(err.message);
@@ -280,20 +278,6 @@ export default function EventEditPage() {
                   value={formData.zipCode}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Event Image (Base64)
-                </label>
-                <textarea
-                  name="eventImageBase64"
-                  value={formData.eventImageBase64}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows="4"
-                  placeholder="Paste base64 image data here"
                 />
               </div>
             </div>
