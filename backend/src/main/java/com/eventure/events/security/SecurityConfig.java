@@ -41,8 +41,10 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                new AntPathRequestMatcher("/api/auth/signup"),
-                                new AntPathRequestMatcher("/api/auth/login")
+                            new AntPathRequestMatcher("/"),
+                            new AntPathRequestMatcher("/ping"),
+                            new AntPathRequestMatcher("/api/auth/signup"),
+                            new AntPathRequestMatcher("/api/auth/login")
                         ).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/events/createEvent")).hasRole("MANAGER")
 
@@ -70,7 +72,11 @@ public class SecurityConfig {
     @Bean
     public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
         org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
-        config.addAllowedOrigin("http://localhost:3000");
+        config.setAllowedOrigins(List.of(
+        "http://localhost:3000",
+        "https://your-frontend-domain.com",
+        "http://eventure-dev.us-west-1.elasticbeanstalk.com"
+        ));
         config.addAllowedMethod("GET");
         config.addAllowedMethod("POST");
         config.addAllowedMethod("PUT");
